@@ -24,6 +24,11 @@ object Startup extends App with JsonProtocols {
   implicit val executor = system.dispatcher
   implicit val materializer = ActorFlowMaterializer()
 
+  val config = ConfigFactory.load()
+  val logger = Logging(system, getClass)
+
+  val regionMatcher = config.getString("riot.regions").r
+
   val summonerService: ActorRef = system.actorOf(SummonerService.props)
 
   val optionsSupport = {
@@ -52,15 +57,12 @@ object Startup extends App with JsonProtocols {
   val routes = {
     logRequestResult("API-service") {
       respondWithHeaders(corsHeaders) {
-        pathPrefix("api" / Segment) { region =>
+        pathPrefix("api" / regionMatcher) { region =>
           summonerRoute(region)
         }
       }
     }
   }
-
-  val config = ConfigFactory.load()
-  val logger = Logging(system, getClass)
 
   // Bind the HTTP endpoint. Specify http.interface and http.port in the configuration
   // to change the address and port to bind to.
