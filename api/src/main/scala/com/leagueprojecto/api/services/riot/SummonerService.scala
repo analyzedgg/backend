@@ -4,7 +4,6 @@ import akka.actor.{ActorRef, Props, Actor}
 import com.leagueprojecto.api.JsonProtocols
 import com.leagueprojecto.api.domain.Summoner
 import com.ning.http.client.{Response, AsyncCompletionHandler}
-import Summoner
 import spray.json._
 
 object SummonerService {
@@ -29,14 +28,17 @@ class SummonerService extends Actor with RiotService with JsonProtocols {
             .parseJson
             .asJsObject
 
-          val firstKey = result.fields.keys.head
-          val summoner = result.fields.get(firstKey).get.convertTo[Summoner]
+          val summoner = transform(result)
 
           origSender ! summoner
 
-          response
+          response // TODO: Do we always need to return something?
         }
       })
+  }
 
+  private def transform(riotResult: JsObject): Summoner = {
+    val firstKey = riotResult.fields.keys.head
+    riotResult.fields.get(firstKey).get.convertTo[Summoner]
   }
 }
