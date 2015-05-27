@@ -4,12 +4,15 @@ import akka.actor._
 import akka.event.Logging
 import akka.http.Http
 import akka.http.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.model.HttpResponse
+import akka.http.model.StatusCodes._
 import akka.http.model.headers.RawHeader
 import akka.http.server.Directives._
+import akka.http.server.ExceptionHandler
 import akka.stream.ActorFlowMaterializer
 import akka.util.Timeout
 import com.leagueprojecto.api.domain.Summoner
-import com.leagueprojecto.api.services.riot.SummonerService
+import com.leagueprojecto.api.services.riot.{RiotService, SummonerService}
 import com.leagueprojecto.api.services.riot.SummonerService.GetSummonerByName
 import com.typesafe.config.ConfigFactory
 
@@ -37,6 +40,12 @@ object Startup extends App with JsonProtocols {
     }
   }
 
+  implicit def myExceptionHandler = ExceptionHandler {
+    case e: SummonerService.SummonerNotFound  => complete(HttpResponse(NotFound))
+    case e: RiotService.ServiceNotAvailable   => complete(HttpResponse(ServiceUnavailable))
+    case _                                    => complete(HttpResponse(InternalServerError))
+  }
+
   val corsHeaders = List(RawHeader("Access-Control-Allow-Origin", "*"),
     RawHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS, DELETE"),
     RawHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization"))
@@ -46,8 +55,7 @@ object Startup extends App with JsonProtocols {
       pathEndOrSingleSlash {
         get {
           complete {
-            val message = GetSummonerByName(region, name)
-            (summonerService ? message).mapTo[Summoner]
+            (summonerService ? GetSummonerByName(region, name)).mapTo[Summoner]
           }
         } ~ optionsSupport
       }

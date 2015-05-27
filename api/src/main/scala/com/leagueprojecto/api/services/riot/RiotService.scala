@@ -3,6 +3,10 @@ package com.leagueprojecto.api.services.riot
 import akka.actor.Actor
 import com.ning.http.client.AsyncHttpClient
 
+object RiotService {
+  class ServiceNotAvailable(message: String) extends Exception
+}
+
 trait RiotService {
   this: Actor =>
 
