@@ -43,6 +43,7 @@ object Startup extends App with JsonProtocols {
   implicit def myExceptionHandler = ExceptionHandler {
     case e: SummonerService.SummonerNotFound  => complete(HttpResponse(NotFound))
     case e: RiotService.ServiceNotAvailable   => complete(HttpResponse(ServiceUnavailable))
+    case e: RiotService.TooManyRequests       => complete(HttpResponse(TooManyRequests))
     case _                                    => complete(HttpResponse(InternalServerError))
   }
 

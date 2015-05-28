@@ -5,6 +5,7 @@ import com.ning.http.client.AsyncHttpClient
 
 object RiotService {
   class ServiceNotAvailable(message: String) extends Exception
+  class TooManyRequests(message: String) extends Exception
 }
 
 trait RiotService {
