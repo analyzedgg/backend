@@ -9,6 +9,7 @@ scalaVersion := "2.11.6"
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+
 resolvers += "Mvn repository" at "http://mvnrepository.com/artifact/"
 
 libraryDependencies ++= {
@@ -17,6 +18,8 @@ libraryDependencies ++= {
   val scalaTestVersion = "2.2.1"
   val logbackVersion = "1.1.2"
   val asyncHttpClientVersion = "1.9.25"
+  val jsonPathVersion: String = "0.6.4"
+  val jacksonCore: String = "2.5.3"
 
   Seq(
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
@@ -29,7 +32,9 @@ libraryDependencies ++= {
     "ch.qos.logback" % "logback-classic" % logbackVersion,
     "com.typesafe.akka" %% "akka-http-testkit-experimental" % akkaStreamVersion % "test",
     "org.scalatest"     %% "scalatest" % scalaTestVersion % "test",
-    "com.ning"          % "async-http-client" % asyncHttpClientVersion
+    "com.ning"          % "async-http-client" % asyncHttpClientVersion,
+    "io.gatling"        % "jsonpath_2.11" % jsonPathVersion,
+    "com.fasterxml.jackson.core" % "jackson-databind" % jacksonCore
   )
 }
 

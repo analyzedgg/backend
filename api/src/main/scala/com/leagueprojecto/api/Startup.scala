@@ -11,8 +11,9 @@ import akka.http.server.Directives._
 import akka.http.server.ExceptionHandler
 import akka.stream.ActorFlowMaterializer
 import akka.util.Timeout
-import com.leagueprojecto.api.domain.Summoner
-import com.leagueprojecto.api.services.riot.{RiotService, SummonerService}
+import com.leagueprojecto.api.domain.{MatchHistoryList, Summoner}
+import com.leagueprojecto.api.services.riot.MatchHistoryService.GetMatchHistory
+import com.leagueprojecto.api.services.riot.{MatchHistoryService, RiotService, SummonerService}
 import com.leagueprojecto.api.services.riot.SummonerService.GetSummonerByName
 import com.typesafe.config.ConfigFactory
 
@@ -33,6 +34,7 @@ object Startup extends App with JsonProtocols {
   val regionMatcher = config.getString("riot.regions").r
 
   val summonerService: ActorRef = system.actorOf(SummonerService.props)
+  val matchHistoryService: ActorRef = system.actorOf(MatchHistoryService.props)
 
   val optionsSupport = {
     options {
@@ -63,11 +65,27 @@ object Startup extends App with JsonProtocols {
     }
   }
 
+  def matchhistoryRoute(region: String) = {
+    pathPrefix("matchhistory" / LongNumber) { summonerId =>
+      pathEndOrSingleSlash {
+        get {
+          complete {
+            (matchHistoryService ? GetMatchHistory(region, summonerId)).mapTo[MatchHistoryList]
+          }
+        } ~ optionsSupport
+      }
+    }
+  }
+
+
   val routes = {
     logRequestResult("API-service") {
       respondWithHeaders(corsHeaders) {
-        pathPrefix("api" / regionMatcher) { region =>
-          summonerRoute(region)
+        pathPrefix("api" / regionMatcher) { regionSegment =>
+          val region = regionSegment.toLowerCase
+
+          summonerRoute(region) ~
+          matchhistoryRoute(region)
         }
       }
     }

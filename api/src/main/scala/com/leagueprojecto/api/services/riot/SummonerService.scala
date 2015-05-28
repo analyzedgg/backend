@@ -22,7 +22,7 @@ class SummonerService extends Actor with ActorLogging with RiotService with Json
     case GetSummonerByName(region, name) =>
       val origSender: ActorRef = sender()
 
-      val future: ListenableFuture[Response] = httpClient.prepareGet(riotApi(region, summoner_byname + name))
+      val future: ListenableFuture[Response] = httpClient.prepareGet(riotApi(region, summonerByName + name))
         .addQueryParam("api_key", api_key)
         .execute()
 
