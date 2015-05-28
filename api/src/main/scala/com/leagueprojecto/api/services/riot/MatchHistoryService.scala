@@ -3,11 +3,10 @@ package com.leagueprojecto.api.services.riot
 import akka.actor.Status.Failure
 import akka.actor.{ActorLogging, ActorRef, Props, Actor}
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.leagueprojecto.api.domain.{MatchHistoryList, PlayerStats, MatchHistory}
+import com.leagueprojecto.api.domain.{PlayerStats, MatchHistory}
 import com.leagueprojecto.api.services.riot.RiotService.{TooManyRequests, ServiceNotAvailable}
 import com.ning.http.client.{ListenableFuture, Response}
 import io.gatling.jsonpath.JsonPath
-import spray.json._
 
 object MatchHistoryService {
   case class GetMatchHistory(region: String, summonerId: Long)
@@ -62,13 +61,13 @@ class MatchHistoryService extends Actor with ActorLogging with RiotService {
       }, context.dispatcher)
   }
 
-  private def transform(riotResult: String): MatchHistoryList = {
+  private def transform(riotResult: String): List[MatchHistory] = {
     val jsonObject = (new ObjectMapper).readValue(riotResult, classOf[Object])
 
     val matches = JsonPath.query("$.matches[*]['queueType','matchDuration']", jsonObject).right.get.grouped(2).toList
     val stats = JsonPath.query("$.matches[*]['participants'][0]['stats']['minionsKilled']", jsonObject).right.get.toList
 
-    val matchList = (matches zip stats).map {
+    (matches zip stats).map {
       case x =>
         val queueType =     x._1.head.toString
         val matchDuration = x._1(1).toString.toInt
@@ -76,8 +75,6 @@ class MatchHistoryService extends Actor with ActorLogging with RiotService {
 
         MatchHistory(queueType, matchDuration, PlayerStats(minionsKilled))
     }
-
-    MatchHistoryList(matchList)
   }
 }
 

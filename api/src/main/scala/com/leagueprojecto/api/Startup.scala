@@ -11,7 +11,7 @@ import akka.http.server.Directives._
 import akka.http.server.ExceptionHandler
 import akka.stream.ActorFlowMaterializer
 import akka.util.Timeout
-import com.leagueprojecto.api.domain.{MatchHistoryList, Summoner}
+import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
 import com.leagueprojecto.api.services.riot.MatchHistoryService.GetMatchHistory
 import com.leagueprojecto.api.services.riot.{MatchHistoryService, RiotService, SummonerService}
 import com.leagueprojecto.api.services.riot.SummonerService.GetSummonerByName
@@ -70,7 +70,7 @@ object Startup extends App with JsonProtocols {
       pathEndOrSingleSlash {
         get {
           complete {
-            (matchHistoryService ? GetMatchHistory(region, summonerId)).mapTo[MatchHistoryList]
+            (matchHistoryService ? GetMatchHistory(region, summonerId)).mapTo[List[MatchHistory]]
           }
         } ~ optionsSupport
       }
