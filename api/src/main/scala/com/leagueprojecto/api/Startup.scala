@@ -12,8 +12,9 @@ import akka.http.server.ExceptionHandler
 import akka.stream.ActorFlowMaterializer
 import akka.util.Timeout
 import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
+import com.leagueprojecto.api.services.riot.CacheService.CachedResponse
 import com.leagueprojecto.api.services.riot.MatchHistoryService.GetMatchHistory
-import com.leagueprojecto.api.services.riot.{MatchHistoryService, RiotService, SummonerService}
+import com.leagueprojecto.api.services.riot.{CacheService, MatchHistoryService, RiotService, SummonerService}
 import com.leagueprojecto.api.services.riot.SummonerService.GetSummonerByName
 import com.typesafe.config.ConfigFactory
 
@@ -35,6 +36,8 @@ object Startup extends App with JsonProtocols {
 
   val summonerService: ActorRef = system.actorOf(SummonerService.props)
   val matchHistoryService: ActorRef = system.actorOf(MatchHistoryService.props)
+
+  val cachedSummonerService: ActorRef = system.actorOf(CacheService.props[Summoner](summonerService, 60))
 
   val optionsSupport = {
     options {
@@ -58,8 +61,8 @@ object Startup extends App with JsonProtocols {
       pathEndOrSingleSlash {
         get {
           complete {
-            (summonerService ? GetSummonerByName(region, name)).mapTo[Summoner]
-          }
+            (cachedSummonerService ? GetSummonerByName(region, name)).mapTo[CachedResponse[Summoner]]
+        }
         } ~ optionsSupport
       }
     }
