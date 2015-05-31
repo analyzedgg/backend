@@ -25,7 +25,7 @@ import scala.concurrent.duration._
 
 object Startup extends App with JsonProtocols {
   implicit val system = ActorSystem("api")
-  implicit val timeout: Timeout = 2.seconds
+  implicit val timeout: Timeout = 5.seconds
 
   implicit val executor = system.dispatcher
   implicit val materializer = ActorFlowMaterializer()
@@ -62,7 +62,7 @@ object Startup extends App with JsonProtocols {
     RawHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS, DELETE"),
     RawHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization"))
 
-  def summonerRoute(region: String) = {
+  def summonerRoute(implicit region: String) = {
     pathPrefix("summoner" / Segment) { name =>
       pathEndOrSingleSlash {
         get {
@@ -74,7 +74,7 @@ object Startup extends App with JsonProtocols {
     }
   }
 
-  def matchhistoryRoute(region: String) = {
+  def matchhistoryRoute(implicit region: String) = {
     pathPrefix("matchhistory" / LongNumber) { summonerId =>
       pathEndOrSingleSlash {
         get {
@@ -91,13 +91,12 @@ object Startup extends App with JsonProtocols {
   //  logRequestResult("API-service") {
       respondWithHeaders(corsHeaders) {
         pathPrefix("api" / regionMatcher) { regionSegment =>
-          val region = regionSegment.toLowerCase
+          implicit val region = regionSegment.toLowerCase
 
-          summonerRoute(region) ~
-          matchhistoryRoute(region)
+          summonerRoute ~
+          matchhistoryRoute
         }
       }
-  //  }
   }
 
   // Bind the HTTP endpoint. Specify http.interface and http.port in the configuration

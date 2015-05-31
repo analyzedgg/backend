@@ -32,7 +32,7 @@ object CacheService {
 class CacheService[R : ClassTag](target: ActorRef, keepCacheSeconds: Int) extends Actor with ActorLogging {
   import CacheService._
 
-  implicit val timeout: Timeout = 1.second
+  implicit val timeout: Timeout = 30.second
 
   // 3 dimensional map of Message, Response, InvalidationDate
   var cacheMap: Map3D[Any, R, Long] = new Map3D
@@ -45,7 +45,6 @@ class CacheService[R : ClassTag](target: ActorRef, keepCacheSeconds: Int) extend
       cacheMap.iterator.filter(x => x._2.productElement(1).toString.toLong < timestamp).foreach(cacheMap -= _._1)
 
     case message: Any =>
-
       if (cacheMap.isDefinedAt(message)) {
         val cacheHit = cacheMap(message)
         sender() ! CachedResponse(cacheHit._1, cacheHit._2)
