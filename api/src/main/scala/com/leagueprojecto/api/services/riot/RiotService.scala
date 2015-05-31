@@ -18,8 +18,8 @@ trait RiotService {
   val api_key = config.getString("riot.api-key")
 
   // Services
-  val summonerByName = config.getString("riot.service-summonerbyname")
-  val matchHistoryBySummonerId = config.getString("riot.service-matchhistory")
+  val summonerByName = config.getString("riot.services.summonerbyname.endpoint")
+  val matchHistoryBySummonerId = config.getString("riot.services.matchhistory.endpoint")
 
   def riotApi(region: String, service: String) = s"$endpoint/$region/$service"
 }
