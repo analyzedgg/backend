@@ -12,9 +12,10 @@ import akka.http.server.ExceptionHandler
 import akka.stream.ActorFlowMaterializer
 import akka.util.Timeout
 import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
-import com.leagueprojecto.api.services.riot.CacheService.CachedResponse
+import com.leagueprojecto.api.services.CacheService
+import CacheService.CachedResponse
 import com.leagueprojecto.api.services.riot.MatchHistoryService.GetMatchHistory
-import com.leagueprojecto.api.services.riot.{CacheService, MatchHistoryService, RiotService, SummonerService}
+import com.leagueprojecto.api.services.riot.{MatchHistoryService, RiotService, SummonerService}
 import com.leagueprojecto.api.services.riot.SummonerService.GetSummonerByName
 import com.typesafe.config.ConfigFactory
 
@@ -37,7 +38,8 @@ object Startup extends App with JsonProtocols {
   val summonerService: ActorRef = system.actorOf(SummonerService.props)
   val matchHistoryService: ActorRef = system.actorOf(MatchHistoryService.props)
 
-  val cachedSummonerService: ActorRef = system.actorOf(CacheService.props[Summoner](summonerService, 60))
+  val cachedSummonerService: ActorRef     = system.actorOf(CacheService.props[Summoner](summonerService, 5 * 60))
+  val cachedMatchHistoryService: ActorRef = system.actorOf(CacheService.props[List[MatchHistory]](matchHistoryService, 5 * 60))
 
   val optionsSupport = {
     options {
@@ -73,7 +75,7 @@ object Startup extends App with JsonProtocols {
       pathEndOrSingleSlash {
         get {
           complete {
-            (matchHistoryService ? GetMatchHistory(region, summonerId)).mapTo[List[MatchHistory]]
+            (cachedMatchHistoryService ? GetMatchHistory(region, summonerId)).mapTo[CachedResponse[List[MatchHistory]]]
           }
         } ~ optionsSupport
       }
@@ -82,7 +84,7 @@ object Startup extends App with JsonProtocols {
 
 
   val routes = {
-    logRequestResult("API-service") {
+  //  logRequestResult("API-service") {
       respondWithHeaders(corsHeaders) {
         pathPrefix("api" / regionMatcher) { regionSegment =>
           val region = regionSegment.toLowerCase
@@ -91,7 +93,7 @@ object Startup extends App with JsonProtocols {
           matchhistoryRoute(region)
         }
       }
-    }
+  //  }
   }
 
   // Bind the HTTP endpoint. Specify http.interface and http.port in the configuration
