@@ -9,7 +9,7 @@ import com.ning.http.client.{ListenableFuture, Response}
 import io.gatling.jsonpath.JsonPath
 
 object MatchHistoryService {
-  case class GetMatchHistory(region: String, summonerId: Long)
+  case class GetMatchHistory(region: String, summonerId: Long, beginIndex: Int = 0, endIndex: Int = 15)
   class MatchNotFound(message: String) extends Exception
 
   def props: Props = Props[MatchHistoryService]
@@ -19,12 +19,14 @@ class MatchHistoryService extends Actor with ActorLogging with RiotService {
   import MatchHistoryService._
 
   override def receive: Receive = {
-    case GetMatchHistory(region, summonerId) =>
+    case GetMatchHistory(region, summonerId, beginIndex, endIndex) =>
       val origSender: ActorRef = sender()
 
       val future: ListenableFuture[Response] =
         httpClient.prepareGet(riotApi(region, matchHistoryBySummonerId + summonerId))
         .addQueryParam("api_key", api_key)
+        .addQueryParam("beginIndex", beginIndex.toString)
+        .addQueryParam("endIndex", endIndex.toString)
         .execute()
 
       future.addListener(new Runnable {
