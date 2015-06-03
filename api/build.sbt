@@ -29,6 +29,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-core-experimental" % akkaStreamVersion,
     "com.typesafe.akka" %% "akka-http-experimental" % akkaStreamVersion,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaStreamVersion,
+    "com.typesafe.akka" % "akka-testkit_2.11" % akkaVersion,
     "ch.qos.logback" % "logback-classic" % logbackVersion,
     "com.typesafe.akka" %% "akka-http-testkit-experimental" % akkaStreamVersion % "test",
     "org.scalatest"     %% "scalatest" % scalaTestVersion % "test",

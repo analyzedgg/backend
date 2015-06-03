@@ -15,7 +15,7 @@ object CacheService {
   case class CachedResponse[R](response: R, cacheInvalidationDate: Long)
   case object RemoveInvalidatedCache
 
-  def props[R : ClassTag](target: ActorRef, keepCacheSeconds: Int) = Props(new CacheService[R](target, keepCacheSeconds))
+  def props[R : ClassTag](target: ActorRef, keepCacheMilliseconds: Long) = Props(new CacheService[R](target, keepCacheMilliseconds))
 
   class Map3D[K, M, R] {
     private val wrapped = new mutable.HashMap[K, (M, R)]
@@ -29,7 +29,7 @@ object CacheService {
   }
 }
 
-class CacheService[R : ClassTag](target: ActorRef, keepCacheSeconds: Int) extends Actor with ActorLogging {
+class CacheService[R : ClassTag](target: ActorRef, keepCacheMilliseconds: Long) extends Actor with ActorLogging {
   import CacheService._
 
   implicit val timeout: Timeout = 30.second
@@ -48,7 +48,7 @@ class CacheService[R : ClassTag](target: ActorRef, keepCacheSeconds: Int) extend
       if (cacheMap.isDefinedAt(message)) {
         val cacheHit = cacheMap(message)
         sender() ! CachedResponse(cacheHit._1, cacheHit._2)
-        println(s"Successful hit on cache for message: $message")
+        println(s"Successful hit on cache for message '$message' with invalidation date: '${cacheHit._2}'")
       } else {
         val origSender = sender()
 
@@ -59,10 +59,10 @@ class CacheService[R : ClassTag](target: ActorRef, keepCacheSeconds: Int) extend
           case response if runtimeClass.isInstance(response) =>
             val typedResponse = response.asInstanceOf[R]
 
-            val timestamp = Calendar.getInstance().getTime.getTime
-            cacheMap.put(message)(typedResponse)(timestamp + (keepCacheSeconds * 1000))
+            val timestamp = Calendar.getInstance().getTime.getTime + (keepCacheMilliseconds * 1000)
+            cacheMap.put(message)(typedResponse)(timestamp)
 
-            println(s"Added response for message '$message' in cache map")
+            println(s"Added response for message '$message' in cache map with invalidation date: '$timestamp'")
 
             CachedResponse[R](typedResponse, timestamp)
           case _ =>
