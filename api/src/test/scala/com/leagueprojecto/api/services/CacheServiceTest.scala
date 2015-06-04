@@ -49,7 +49,7 @@ class CacheServiceTest extends FlatSpec with Matchers with GivenWhenThen {
     val cacheService = TestActorRef(CacheService.props[String](targetProbe.ref, 1000))
 
     And("one sample message and a response")
-    val message = "Sample message"
+    val message = "Sample message - two calls"
     val response = "Sample response"
 
     When("the first message is sent")
@@ -59,7 +59,10 @@ class CacheServiceTest extends FlatSpec with Matchers with GivenWhenThen {
     targetProbe.expectMsg(message)
     targetProbe.reply(response)
 
-    When("the second message is sent")
+    And("A short timeout happens")
+    Thread.sleep(100)
+
+    And("the second message is sent")
     val future2 = cacheService ? message
 
     Then("the target probe should receive no message")
@@ -76,7 +79,7 @@ class CacheServiceTest extends FlatSpec with Matchers with GivenWhenThen {
     val cacheService = TestActorRef(CacheService.props[String](targetProbe.ref, 0))
 
     And("one sample message and a two responses")
-    val message = "Sample message"
+    val message = "Sample message - old cache"
     val responses = ("Sample response", "Sample response 2")
 
     When("the first message is sent")
@@ -86,9 +89,17 @@ class CacheServiceTest extends FlatSpec with Matchers with GivenWhenThen {
     targetProbe.expectMsg(message)
     targetProbe.reply(responses._1)
 
-    And("the RemoveInvalidatedCache message is sent")
+    And("the future is completed")
     Await.ready(future, duration)
+
+    And("some time is given to invalidate cache")
+    Thread.sleep(10)
+
+    And("the RemoveInvalidatedCache message is sent")
     cacheService ! RemoveInvalidatedCache
+
+    And("the actor is given some time for removing old cache")
+    Thread.sleep(100)
 
     And("the second message is sent")
     val future2 = cacheService ? message

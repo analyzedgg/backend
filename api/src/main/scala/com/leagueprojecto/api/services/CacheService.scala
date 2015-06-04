@@ -16,17 +16,6 @@ object CacheService {
   case object RemoveInvalidatedCache
 
   def props[R : ClassTag](target: ActorRef, keepCacheMilliseconds: Long) = Props(new CacheService[R](target, keepCacheMilliseconds))
-
-  class Map3D[K, M, R] {
-    private val wrapped = new mutable.HashMap[K, (M, R)]
-    def put(k: K)(m: M)(r: R) = wrapped.put(k, (m, r))
-    def -=(k: K) = wrapped -= k
-    def isDefinedAt(k: K) = wrapped.isDefinedAt(k)
-    def size = wrapped.size
-    def apply(k: K) = wrapped(k)
-
-    def iterator: scala.Iterator[(K, (M, R))] = wrapped.iterator
-  }
 }
 
 class CacheService[R : ClassTag](target: ActorRef, keepCacheMilliseconds: Long) extends Actor with ActorLogging {
@@ -35,7 +24,7 @@ class CacheService[R : ClassTag](target: ActorRef, keepCacheMilliseconds: Long) 
   implicit val timeout: Timeout = 30.second
 
   // 3 dimensional map of Message, Response, InvalidationDate
-  var cacheMap: Map3D[Any, R, Long] = new Map3D
+  val cacheMap = new mutable.HashMap[Any, (R, Long)]
 
   val cacheInvalidator = context.system.scheduler.schedule(0.second, 5.second, self, RemoveInvalidatedCache)
 
@@ -60,7 +49,7 @@ class CacheService[R : ClassTag](target: ActorRef, keepCacheMilliseconds: Long) 
             val typedResponse = response.asInstanceOf[R]
 
             val timestamp = Calendar.getInstance().getTime.getTime + (keepCacheMilliseconds * 1000)
-            cacheMap.put(message)(typedResponse)(timestamp)
+            cacheMap.put(message, (typedResponse, timestamp))
 
             println(s"Added response for message '$message' in cache map with invalidation date: '$timestamp'")
 
