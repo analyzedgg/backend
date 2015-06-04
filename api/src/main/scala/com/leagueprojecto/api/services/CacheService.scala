@@ -1,11 +1,9 @@
 package com.leagueprojecto.api.services
 
 import java.util.Calendar
-
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern._
 import akka.util.Timeout
-
 import scala.collection._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._

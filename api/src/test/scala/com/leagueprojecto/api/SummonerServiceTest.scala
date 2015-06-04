@@ -1,13 +1,9 @@
 package com.leagueprojecto.api
 
-import javax.xml.ws.Response
-
 import com.leagueprojecto.api.domain.Summoner
 import com.ning.http.client.AsyncHttpClient
 import org.scalatest.{GivenWhenThen, Matchers, FlatSpec}
 import spray.json._
-
-import scala.concurrent.Future
 
 class SummonerServiceTest extends FlatSpec with Matchers with GivenWhenThen with JsonProtocols {
   private final val HTTP_CLIENT: AsyncHttpClient  = new AsyncHttpClient
