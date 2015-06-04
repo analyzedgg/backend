@@ -3,7 +3,7 @@ package com.leagueprojecto.api.services
 import akka.actor.ActorSystem
 import akka.testkit.{TestActorRef, TestProbe}
 import akka.util.Timeout
-import com.leagueprojecto.api.services.CacheService.CachedResponse
+import com.leagueprojecto.api.services.CacheService.{RemoveInvalidatedCache, CachedResponse}
 import org.scalatest.{GivenWhenThen, Matchers, FlatSpec}
 import akka.pattern.ask
 import scala.concurrent.Await
@@ -72,7 +72,33 @@ class CacheServiceTest extends FlatSpec with Matchers with GivenWhenThen {
   }
 
   it should "remove the old cache upon getting a RemoveInvalidatedCache message" in new Fixture {
-    true shouldBe false
-    //fix this
+    Given("a CacheService")
+    val cacheService = TestActorRef(CacheService.props[String](targetProbe.ref, 0))
+
+    And("one sample message and a two responses")
+    val message = "Sample message"
+    val responses = ("Sample response", "Sample response 2")
+
+    When("the first message is sent")
+    val future = cacheService ? message
+
+    And("the target probe is stubbed with the first")
+    targetProbe.expectMsg(message)
+    targetProbe.reply(responses._1)
+
+    And("the RemoveInvalidatedCache message is sent")
+    Await.ready(future, duration)
+    cacheService ! RemoveInvalidatedCache
+
+    And("the second message is sent")
+    val future2 = cacheService ? message
+
+    Then("the target probe should receive a message again")
+    targetProbe.expectMsg(message)
+    targetProbe.reply(responses._2)
+
+    And("the result should be response 2")
+    val result = Await.result(future2, duration).asInstanceOf[CachedResponse[String]]
+    result.response shouldBe responses._2
   }
 }
