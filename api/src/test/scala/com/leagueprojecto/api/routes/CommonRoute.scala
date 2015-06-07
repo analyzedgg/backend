@@ -53,5 +53,12 @@ class CommonRoute extends RoutesTest {
       status shouldBe InternalServerError
     }
   }
+
+  it should "always have CORS headers on the response back" in {
+    Get("/api/euw/summoner/Wagglez") ~> routes ~> check {
+      headers should contain theSameElementsAs corsHeaders
+    }
+  }
+
 }
 
