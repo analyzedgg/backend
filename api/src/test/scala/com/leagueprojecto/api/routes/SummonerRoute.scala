@@ -42,4 +42,11 @@ class SummonerRoute extends RoutesTest {
       responseAs[String] shouldBe ""
     }
   }
+
+  it should "always send Options back on requests" in {
+    Options("/api/euw/summoner/Wagglez") ~> routes ~> check {
+      status shouldBe OK
+      responseAs[String] shouldBe ""
+    }
+  }
 }
