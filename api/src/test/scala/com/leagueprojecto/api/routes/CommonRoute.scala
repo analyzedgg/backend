@@ -3,6 +3,7 @@ package com.leagueprojecto.api.routes
 import akka.actor.ActorRef
 import akka.actor.Status.Failure
 import akka.http.model.StatusCodes._
+import akka.http.model.headers.RawHeader
 import akka.testkit.TestActor
 import com.leagueprojecto.api.domain.Summoner
 import com.leagueprojecto.api.services.CacheService.CachedResponse
@@ -56,6 +57,10 @@ class CommonRoute extends RoutesTest {
 
   it should "always have CORS headers on the response back" in {
     Get("/api/euw/summoner/Wagglez") ~> routes ~> check {
+      val corsHeaders = List(RawHeader("Access-Control-Allow-Origin", "*"),
+        RawHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS, DELETE"),
+        RawHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization"))
+
       headers should contain theSameElementsAs corsHeaders
     }
   }
