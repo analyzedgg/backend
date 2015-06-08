@@ -14,7 +14,7 @@ resolvers += "Mvn repository" at "http://mvnrepository.com/artifact/"
 
 libraryDependencies ++= {
   val akkaVersion = "2.3.10"
-  val akkaStreamVersion = "1.0-M5"
+  val akkaStreamVersion = "1.0-RC3"
   val scalaTestVersion = "2.2.1"
   val logbackVersion = "1.1.2"
   val asyncHttpClientVersion = "1.9.25"
@@ -33,7 +33,6 @@ libraryDependencies ++= {
     "ch.qos.logback" % "logback-classic" % logbackVersion,
     "com.typesafe.akka" %% "akka-http-testkit-experimental" % akkaStreamVersion % "test",
     "org.scalatest"     %% "scalatest" % scalaTestVersion % "test",
-    "com.ning"          % "async-http-client" % asyncHttpClientVersion,
     "io.gatling"        % "jsonpath_2.11" % jsonPathVersion,
     "com.fasterxml.jackson.core" % "jackson-databind" % jacksonCore
   )

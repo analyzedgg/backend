@@ -2,8 +2,8 @@ package com.leagueprojecto.api.routes
 
 import akka.actor.ActorRef
 import akka.actor.Status.Failure
-import akka.http.model.StatusCodes._
-import akka.http.model.headers.RawHeader
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.testkit.TestActor
 import com.leagueprojecto.api.domain.Summoner
 import com.leagueprojecto.api.services.CacheService.CachedResponse

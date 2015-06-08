@@ -2,10 +2,13 @@ package com.leagueprojecto.api.services.riot
 
 import akka.actor.Status.Failure
 import akka.actor.{ActorLogging, ActorRef, Props, Actor}
+import akka.http.scaladsl.client.RequestBuilding
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model.{HttpResponse, Uri}
+import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.leagueprojecto.api.domain.{PlayerStats, MatchHistory}
 import com.leagueprojecto.api.services.riot.RiotService.{TooManyRequests, ServiceNotAvailable}
-import com.ning.http.client.{ListenableFuture, Response}
 import io.gatling.jsonpath.JsonPath
 
 object MatchHistoryService {
@@ -22,45 +25,44 @@ class MatchHistoryService extends Actor with ActorLogging with RiotService {
     case GetMatchHistory(region, summonerId, beginIndex, endIndex) =>
       val origSender: ActorRef = sender()
 
-      val future: ListenableFuture[Response] =
-        httpClient.prepareGet(riotApi(region, matchHistoryBySummonerId + summonerId))
-        .addQueryParam("api_key", api_key)
-        .addQueryParam("beginIndex", beginIndex.toString)
-        .addQueryParam("endIndex", endIndex.toString)
-        .execute()
+      val queryParams = Map("beginIndex" -> beginIndex.toString,
+                            "endIndex" -> endIndex.toString)
+      val matchEndpoint: Uri = endpoint(region, matchHistoryBySummonerId + summonerId, queryParams)
 
-      future.addListener(new Runnable {
-        override def run(): Unit = {
-          val response = future.get()
-
-          response.getStatusCode match {
-            case 200 =>
-              val result = response.getResponseBody
+      val future = riotRequest(RequestBuilding.Get(matchEndpoint))
+      future onSuccess {
+        case HttpResponse(OK, _, entity, _) =>
+          Unmarshal(entity).to[String].onSuccess {
+            case result: String =>
               val matches = transform(result)
               origSender ! matches
-
-            case 404 =>
-              val message = s"No games found for summoner id '$summonerId' for region '$region'"
-              log.warning(message)
-              origSender ! Failure(new MatchNotFound(message))
-
-            case 429 =>
-              val message = s"Too many requests"
-              log.warning(message)
-              origSender ! Failure(new TooManyRequests(message))
-
-            case 503 =>
-              val message = s"MatchHistoryService not available"
-              log.warning(message)
-              origSender ! Failure(new ServiceNotAvailable(message))
-
-            case code: Int =>
-              val message = s"Something went wrong. API call error code: $code"
-              log.warning(message)
-              origSender ! Failure(new IllegalStateException(message))
           }
-        }
-      }, context.dispatcher)
+
+        case HttpResponse(NotFound, _, _, _) =>
+          val message = s"No games found for summoner id '$summonerId' for region '$region'"
+          log.warning(message)
+          origSender ! Failure(new MatchNotFound(message))
+
+        case HttpResponse(TooManyRequests, _, _, _) =>
+          val message = "Too many requests"
+          log.warning(message)
+          origSender ! Failure(new TooManyRequests(message))
+
+        case HttpResponse(ServiceUnavailable, _, _, _) =>
+          val message = "MatchHistoryService not available"
+          log.warning(message)
+          origSender ! Failure(new ServiceNotAvailable(message))
+
+        case HttpResponse(status, _, _, _) =>
+          val message = s"Something went wrong. API call error code: ${status.intValue()}"
+          log.warning(message)
+          origSender ! Failure(new IllegalStateException(message))
+      }
+      future onFailure {
+        case e: Exception =>
+          println(s"request failed for some reason: ${e.getMessage}")
+          e.printStackTrace()
+      }
   }
 
   private def transform(riotResult: String): List[MatchHistory] = {

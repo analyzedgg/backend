@@ -2,7 +2,7 @@ package com.leagueprojecto.api
 
 import akka.actor._
 import akka.event.Logging
-import akka.http.Http
+import akka.http.scaladsl.Http
 import akka.stream.ActorFlowMaterializer
 import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
 import com.leagueprojecto.api.services.CacheService

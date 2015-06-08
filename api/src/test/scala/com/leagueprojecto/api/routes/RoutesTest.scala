@@ -2,7 +2,7 @@ package com.leagueprojecto.api.routes
 
 import akka.actor.ActorRef
 import akka.event.LoggingAdapter
-import akka.http.testkit.ScalatestRouteTest
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
 import com.leagueprojecto.api.Routes
 import com.typesafe.config.Config

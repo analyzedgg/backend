@@ -2,20 +2,20 @@ package com.leagueprojecto.api
 
 import akka.actor.{ActorSystem, ActorRef}
 import akka.event.LoggingAdapter
-import akka.http.model.HttpResponse
-import akka.http.model.StatusCodes._
-import akka.http.model.headers.RawHeader
-import akka.http.server.Directives._
-import akka.http.server.ExceptionHandler
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes._
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.ExceptionHandler
 import akka.pattern.ask
 import akka.util.Timeout
 import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
 import com.leagueprojecto.api.services.CacheService.CachedResponse
 import com.leagueprojecto.api.services.riot.MatchHistoryService.GetMatchHistory
 import com.leagueprojecto.api.services.riot.SummonerService.GetSummonerByName
-import com.leagueprojecto.api.services.riot.{RiotService, SummonerService}
+import com.leagueprojecto.api.services.riot.{MatchHistoryService, RiotService, SummonerService}
 import com.typesafe.config.Config
-import akka.http.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 
@@ -39,9 +39,10 @@ trait Routes extends JsonProtocols {
   }
 
   implicit def myExceptionHandler = ExceptionHandler {
-    case e: SummonerService.SummonerNotFound  => complete(HttpResponse(NotFound))
     case e: RiotService.ServiceNotAvailable   => complete(HttpResponse(ServiceUnavailable))
     case e: RiotService.TooManyRequests       => complete(HttpResponse(TooManyRequests))
+    case e: SummonerService.SummonerNotFound  => complete(HttpResponse(NotFound))
+    case e: MatchHistoryService.MatchNotFound => complete(HttpResponse(NotFound))
     case _                                    => complete(HttpResponse(InternalServerError))
   }
 
