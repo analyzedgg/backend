@@ -28,8 +28,9 @@ trait RiotService {
 
   def endpoint(region: String, service: String, queryParams: Map[String, String] = Map.empty): Uri = {
     val queryString = (queryParams + ("api_key" -> api_key)).collect { case x => x._1 + "=" + x._2 }.mkString("&")
-
-    s"/api/lol/$region/$service?$queryString"
+    val URL = s"/api/lol/$region/$service?$queryString"
+    println(URL)
+    URL
   }
 
   def riotRequest(httpRequest: HttpRequest): Future[HttpResponse] =

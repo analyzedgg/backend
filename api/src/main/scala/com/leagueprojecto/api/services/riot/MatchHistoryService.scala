@@ -12,17 +12,18 @@ import com.leagueprojecto.api.services.riot.RiotService.{TooManyRequests, Servic
 import io.gatling.jsonpath.JsonPath
 
 object MatchHistoryService {
-  case class GetMatchHistory(region: String, summonerId: Long, beginIndex: Int = 0, endIndex: Int = 15)
+  case class GetMatchHistory(beginIndex: Int = 0, endIndex: Int = 15)
+  case class MatchHistoryList(matches: List[MatchHistory])
   class MatchNotFound(message: String) extends Exception
 
-  def props: Props = Props[MatchHistoryService]
+  def props(region: String, summonerId: Long) = Props(new MatchHistoryService(region, summonerId))
 }
 
-class MatchHistoryService extends Actor with ActorLogging with RiotService {
+class MatchHistoryService(region: String, summonerId: Long) extends Actor with ActorLogging with RiotService {
   import MatchHistoryService._
 
   override def receive: Receive = {
-    case GetMatchHistory(region, summonerId, beginIndex, endIndex) =>
+    case GetMatchHistory(beginIndex, endIndex) =>
       val origSender: ActorRef = sender()
 
       val queryParams = Map("beginIndex" -> beginIndex.toString,
@@ -35,7 +36,7 @@ class MatchHistoryService extends Actor with ActorLogging with RiotService {
           Unmarshal(entity).to[String].onSuccess {
             case result: String =>
               val matches = transform(result)
-              origSender ! matches
+              origSender ! MatchHistoryList(matches)
           }
 
         case HttpResponse(NotFound, _, _, _) =>
