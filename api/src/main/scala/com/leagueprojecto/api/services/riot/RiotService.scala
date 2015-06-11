@@ -18,15 +18,21 @@ trait RiotService {
   this: Actor =>
 
   private val config = context.system.settings.config
-  val api_key = config.getString("riot.api-key")
 
   implicit def executor: ExecutionContextExecutor = context.system.dispatcher
   implicit val materializer: FlowMaterializer = ActorFlowMaterializer()
 
-  lazy val riotConnectionFlow: Flow[HttpRequest, HttpResponse, Any] =
-    Http(context.system).outgoingConnectionTls(config.getString("riot.api-hostname"), config.getInt("riot.api-port"))
+  private val hostname: String = config.getString("riot.api-hostname")
+  private val port: Int = config.getInt("riot.api-port")
+  private val api_key: String = config.getString("riot.api-key")
 
-  def endpoint(region: String, service: String, queryParams: Map[String, String] = Map.empty): Uri = {
+  val region: String
+  val service: String
+
+  lazy val riotConnectionFlow: Flow[HttpRequest, HttpResponse, Any] =
+    Http(context.system).outgoingConnectionTls(region + hostname, port)
+
+  def endpoint(queryParams: Map[String, String] = Map.empty): Uri = {
     val queryString = (queryParams + ("api_key" -> api_key)).collect { case x => x._1 + "=" + x._2 }.mkString("&")
     val URL = s"/api/lol/$region/$service?$queryString"
     println(URL)

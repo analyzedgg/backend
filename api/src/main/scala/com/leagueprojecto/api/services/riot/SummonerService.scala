@@ -12,20 +12,23 @@ import com.leagueprojecto.api.services.riot.RiotService.{TooManyRequests, Servic
 import spray.json._
 
 object SummonerService {
-  case class GetSummonerByName(region: String, name: String)
+  case object GetSummonerByName
   class SummonerNotFound(message: String) extends Exception
 
-  def props: Props = Props[SummonerService]
+  def props(region: String, name: String): Props = Props(new SummonerService(region, name))
 }
 
-class SummonerService extends Actor with ActorLogging with RiotService with JsonProtocols {
+class SummonerService(regionParam: String, name: String) extends Actor with ActorLogging with RiotService with JsonProtocols {
   import SummonerService._
 
+  override val region = regionParam
+  override val service = summonerByName + name
+
   override def receive: Receive = {
-    case GetSummonerByName(region, name) =>
+    case GetSummonerByName =>
       val origSender: ActorRef = sender()
 
-      val summonerEndpoint: Uri = endpoint(region, summonerByName + name)
+      val summonerEndpoint: Uri = endpoint()
 
       val future = riotRequest(RequestBuilding.Get(summonerEndpoint))
       future onSuccess {

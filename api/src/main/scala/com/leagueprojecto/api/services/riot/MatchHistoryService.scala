@@ -19,8 +19,11 @@ object MatchHistoryService {
   def props(region: String, summonerId: Long) = Props(new MatchHistoryService(region, summonerId))
 }
 
-class MatchHistoryService(region: String, summonerId: Long) extends Actor with ActorLogging with RiotService {
+class MatchHistoryService(regionParam: String, summonerId: Long) extends Actor with ActorLogging with RiotService {
   import MatchHistoryService._
+
+  override val region = regionParam
+  override val service = matchHistoryBySummonerId + summonerId
 
   override def receive: Receive = {
     case GetMatchHistory(beginIndex, endIndex) =>
@@ -28,7 +31,7 @@ class MatchHistoryService(region: String, summonerId: Long) extends Actor with A
 
       val queryParams = Map("beginIndex" -> beginIndex.toString,
                             "endIndex" -> endIndex.toString)
-      val matchEndpoint: Uri = endpoint(region, matchHistoryBySummonerId + summonerId, queryParams)
+      val matchEndpoint: Uri = endpoint(queryParams)
 
       val future = riotRequest(RequestBuilding.Get(matchEndpoint))
       future onSuccess {

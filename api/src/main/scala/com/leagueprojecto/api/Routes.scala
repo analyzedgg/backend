@@ -11,7 +11,8 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
 import com.leagueprojecto.api.services.CacheService.CachedResponse
-import com.leagueprojecto.api.services.MatchCombinerManager.GetMatches
+import com.leagueprojecto.api.services.MatchHistoryManager.GetMatches
+import com.leagueprojecto.api.services.SummonerManager.GetSummoner
 import com.leagueprojecto.api.services.riot.MatchHistoryService.GetMatchHistory
 import com.leagueprojecto.api.services.riot.SummonerService.GetSummonerByName
 import com.leagueprojecto.api.services.riot.{MatchHistoryService, RiotService, SummonerService}
@@ -56,7 +57,7 @@ trait Routes extends JsonProtocols {
       pathEndOrSingleSlash {
         get {
           complete {
-            (cachedSummonerService ? GetSummonerByName(region, name)).mapTo[CachedResponse[Summoner]]
+            (cachedSummonerService ? GetSummoner(region, name)).mapTo[CachedResponse[Summoner]]
           }
         } ~ optionsSupport
       }

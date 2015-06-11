@@ -5,7 +5,7 @@ import akka.event.Logging
 import akka.http.scaladsl.Http
 import akka.stream.ActorFlowMaterializer
 import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
-import com.leagueprojecto.api.services.{MatchCombinerManager, CacheService}
+import com.leagueprojecto.api.services.{SummonerManager, MatchHistoryManager, MatchHistoryManager$, CacheService}
 import com.leagueprojecto.api.services.riot.{MatchHistoryService, SummonerService}
 import com.typesafe.config.ConfigFactory
 
@@ -18,8 +18,8 @@ object Startup extends App with Routes {
   implicit val materializer = ActorFlowMaterializer()
 
   // Services
-  val summonerService: ActorRef = system.actorOf(SummonerService.props)
-  val matchHistoryService: ActorRef = system.actorOf(MatchCombinerManager.props)
+  val summonerService: ActorRef = system.actorOf(SummonerManager.props)
+  val matchHistoryService: ActorRef = system.actorOf(MatchHistoryManager.props)
 
   // Service caches
   val summonerCacheTime = config.getLong("riot.services.summonerbyname.cacheTime")
