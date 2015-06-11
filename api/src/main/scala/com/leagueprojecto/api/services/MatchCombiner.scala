@@ -18,13 +18,15 @@ class MatchCombiner(region: String, summonerId: Long) extends Actor {
   var matches: List[MatchHistory] = List.empty
   var originalSender = Actor.noSender
 
+  val maxCalls = context.system.settings.config.getInt("matches-combiner.max-calls")
+
   override def receive: Receive = {
 
     case GetAllMatches =>
       originalSender = sender()
       matchHistoryService ! GetMatchHistory(0, 15)
 
-    case MatchHistoryList(matchesResponse) if matchesResponse.length == 15 && (matches.length + 15) < 60 =>
+    case MatchHistoryList(matchesResponse) if matchesResponse.length == 15 && (matches.length + 15) < (maxCalls * 15) =>
       matches = matches ::: matchesResponse
       matchHistoryService ! GetMatchHistory(matches.length, matches.length + 15)
 
