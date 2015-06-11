@@ -7,8 +7,8 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.testkit.TestActor
 import com.leagueprojecto.api.domain.Summoner
 import com.leagueprojecto.api.services.CacheService.CachedResponse
+import com.leagueprojecto.api.services.SummonerManager.GetSummoner
 import com.leagueprojecto.api.services.riot.RiotService.{ServiceNotAvailable, TooManyRequests}
-import com.leagueprojecto.api.services.riot.SummonerService.GetSummonerByName
 
 class CommonRoute extends RoutesTest {
 
@@ -17,10 +17,10 @@ class CommonRoute extends RoutesTest {
   summonerProbe.setAutoPilot(new TestActor.AutoPilot {
     def run(sender: ActorRef, msg: Any): TestActor.AutoPilot = {
       msg match {
-        case GetSummonerByName(_, "Wagglez") => sender ! CachedResponse[Summoner](validSummoner, 1010101010)
-        case GetSummonerByName(_, "_TooManyRequests") => sender ! Failure(new TooManyRequests(""))
-        case GetSummonerByName(_, "_ServiceUnavailable") => sender ! Failure(new ServiceNotAvailable(""))
-        case GetSummonerByName(_, "_InternalServerError") => sender ! Failure(new ArrayIndexOutOfBoundsException())
+        case GetSummoner(_, "Wagglez") => sender ! CachedResponse[Summoner](validSummoner, 1010101010)
+        case GetSummoner(_, "_TooManyRequests") => sender ! Failure(new TooManyRequests(""))
+        case GetSummoner(_, "_ServiceUnavailable") => sender ! Failure(new ServiceNotAvailable(""))
+        case GetSummoner(_, "_InternalServerError") => sender ! Failure(new ArrayIndexOutOfBoundsException())
       }
       TestActor.KeepRunning
     }

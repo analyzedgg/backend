@@ -8,7 +8,8 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.testkit.TestActor
 import com.leagueprojecto.api.domain.Summoner
 import com.leagueprojecto.api.services.CacheService.CachedResponse
-import com.leagueprojecto.api.services.riot.SummonerService.{GetSummonerByName, SummonerNotFound}
+import com.leagueprojecto.api.services.SummonerManager.GetSummoner
+import com.leagueprojecto.api.services.riot.SummonerService.{SummonerNotFound}
 
 class SummonerRoute extends RoutesTest {
   val endpoint = "/api/euw/summoner"
@@ -17,9 +18,9 @@ class SummonerRoute extends RoutesTest {
   summonerProbe.setAutoPilot(new TestActor.AutoPilot {
     def run(sender: ActorRef, msg: Any): TestActor.AutoPilot = {
       msg match {
-        case GetSummonerByName(_, validSummoner.name) =>
+        case GetSummoner(_, validSummoner.name) =>
           sender ! CachedResponse[Summoner](validSummoner, 1010101010)
-        case GetSummonerByName(_, "NotExistingSummoner") =>
+        case GetSummoner(_, "NotExistingSummoner") =>
           sender ! Failure(new SummonerNotFound(""))
       }
       TestActor.KeepRunning

@@ -14,7 +14,7 @@ object MatchHistoryManager {
   def props = Props[MatchHistoryManager]
 }
 class MatchHistoryManager extends Actor {
-  implicit val timeout: Timeout = 10.second
+  implicit val timeout: Timeout = 1.minute
 
   override def receive: Receive = {
     case GetMatches(region, summonerId) =>

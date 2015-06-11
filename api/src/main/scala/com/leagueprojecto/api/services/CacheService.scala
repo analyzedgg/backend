@@ -19,7 +19,7 @@ object CacheService {
 class CacheService[R : ClassTag](target: ActorRef, keepCacheMilliseconds: Long) extends Actor with ActorLogging {
   import CacheService._
 
-  implicit val timeout: Timeout = 30.second
+  implicit val timeout: Timeout = 1.minute
 
   // 3 dimensional map of Message, Response, InvalidationDate
   val cacheMap = new mutable.HashMap[Any, (R, Long)]
