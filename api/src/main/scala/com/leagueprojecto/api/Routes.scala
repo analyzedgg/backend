@@ -24,7 +24,7 @@ import scala.concurrent.duration._
 trait Routes extends JsonProtocols {
   implicit val system: ActorSystem
   implicit def executor: ExecutionContextExecutor
-  implicit val timeout: Timeout = Timeout(5.seconds)
+  implicit val timeout: Timeout = Timeout(1.minute)
 
   def config: Config
   val logger: LoggingAdapter
