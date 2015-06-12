@@ -21,7 +21,6 @@ class SummonerManager extends Actor {
   override def receive: Receive = {
     case GetSummoner(region, name) =>
       val summoner = context.actorOf(SummonerService.props(region, name))
-      val originalSender = sender()
 
       (summoner ? GetSummonerByName) pipeTo sender() onComplete {
         case _ => context.stop(summoner)
