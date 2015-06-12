@@ -12,14 +12,18 @@ import com.leagueprojecto.api.services.riot.RiotService.{TooManyRequests, Servic
 import io.gatling.jsonpath.JsonPath
 
 object MatchHistoryService {
+
   case class GetMatchHistory(beginIndex: Int = 0, endIndex: Int = 15)
+
   case class MatchHistoryList(matches: List[MatchHistory])
+
   class MatchNotFound(message: String) extends Exception
 
   def props(region: String, summonerId: Long) = Props(new MatchHistoryService(region, summonerId))
 }
 
 class MatchHistoryService(regionParam: String, summonerId: Long) extends Actor with ActorLogging with RiotService {
+
   import MatchHistoryService._
 
   override val region = regionParam
@@ -30,7 +34,7 @@ class MatchHistoryService(regionParam: String, summonerId: Long) extends Actor w
       val origSender: ActorRef = sender()
 
       val queryParams = Map("beginIndex" -> beginIndex.toString,
-                            "endIndex" -> endIndex.toString)
+        "endIndex" -> endIndex.toString)
       val matchEndpoint: Uri = endpoint(queryParams)
 
       val future = riotRequest(RequestBuilding.Get(matchEndpoint))
@@ -73,16 +77,26 @@ class MatchHistoryService(regionParam: String, summonerId: Long) extends Actor w
     val jsonObject = (new ObjectMapper).readValue(riotResult, classOf[Object])
 
     val matches = JsonPath.query("$.matches[*]['queueType','matchDuration']", jsonObject).right.get.grouped(2).toList
-    val stats = JsonPath.query("$.matches[*]['participants'][0]['stats']['minionsKilled']", jsonObject).right.get.toList
+    val participants = JsonPath.query("$.matches[*]['participants'][0]['championId']", jsonObject).right.get.toList
+    val timeline = JsonPath.query("$.matches[*]['participants'][0]['timeline']['role','lane']", jsonObject).right.get.grouped(2).toList
+    val stats = JsonPath.query("$.matches[*]['participants'][0]['stats']['minionsKilled','winner','kills','deaths','assists']", jsonObject).
+      right.get.grouped(5).toList
 
-    (matches zip stats).map {
-      case x =>
-        val queueType =     x._1.head.toString
-        val matchDuration = x._1(1).toString.toInt
-        val minionsKilled = x._2.toString.toInt
-
-        MatchHistory(queueType, matchDuration, PlayerStats(minionsKilled))
-    }
-  }
+    for (i <- matches.indices) yield
+    MatchHistory(
+      matches(i)(0).toString,
+      matches(i)(1).toString.toInt,
+      PlayerStats(
+        stats(i)(0).toString.toInt,
+        stats(i)(2).toString.toInt,
+        stats(i)(3).toString.toInt,
+        stats(i)(4).toString.toInt
+      ),
+      participants(i).toString.toInt,
+      timeline(i)(0).toString,
+      timeline(i)(1).toString,
+      stats(i)(1).toString.toBoolean
+    )
+  }.toList
 }
 
