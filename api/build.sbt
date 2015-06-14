@@ -47,7 +47,7 @@ deployTask <<= assembly map { (asm) =>
   s"scp $local $remote".!
 
   println("Run deployed app")
-  s"ssh $account league/run.sh".!
+  s"ssh $account cd league && ./run.sh".!
 }
 
 mainClass in (Compile,run) := Some("com.leagueprojecto.api.Startup")
