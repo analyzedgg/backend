@@ -61,7 +61,7 @@ class SummonerService(regionParam: String, name: String) extends Actor with Acto
       }
       future onFailure {
         case e: Exception =>
-          println(s"request failed for some reason: ${e.getMessage}")
+          log.error(s"request failed for some reason: ${e.getMessage}")
           e.printStackTrace()
       }
   }

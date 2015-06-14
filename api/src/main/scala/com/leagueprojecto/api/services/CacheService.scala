@@ -35,7 +35,7 @@ class CacheService[R : ClassTag](target: ActorRef, keepCacheMilliseconds: Long) 
       if (cacheMap.isDefinedAt(message)) {
         val cacheHit = cacheMap(message)
         sender() ! CachedResponse(cacheHit._1, cacheHit._2)
-        println(s"Successful hit on cache for message '$message' with invalidation date: '${cacheHit._2}'")
+        log.debug(s"Successful hit on cache for message '$message' with invalidation date: '${cacheHit._2}'")
       } else {
         val origSender = sender()
 
@@ -49,7 +49,7 @@ class CacheService[R : ClassTag](target: ActorRef, keepCacheMilliseconds: Long) 
             val timestamp = Calendar.getInstance().getTime.getTime + (keepCacheMilliseconds * 1000)
             cacheMap.put(message, (typedResponse, timestamp))
 
-            println(s"Added response for message '$message' in cache map with invalidation date: '$timestamp'")
+            log.debug(s"Added response for message '$message' in cache map with invalidation date: '$timestamp'")
 
             CachedResponse[R](typedResponse, timestamp)
           case _ =>

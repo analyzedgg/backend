@@ -1,6 +1,6 @@
 package com.leagueprojecto.api.services.riot
 
-import akka.actor.Actor
+import akka.actor.{ActorLogging, Actor}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.{HttpResponse, HttpRequest}
