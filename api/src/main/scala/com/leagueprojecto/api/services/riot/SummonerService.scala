@@ -31,39 +31,28 @@ class SummonerService(regionParam: String, name: String) extends Actor with Acto
       val summonerEndpoint: Uri = endpoint()
 
       val future = riotRequest(RequestBuilding.Get(summonerEndpoint))
-      future onSuccess {
-        case HttpResponse(OK, _, entity, _) =>
-          Unmarshal(entity).to[String].onSuccess {
-            case result: String =>
-              val summoner = transform(result.parseJson.asJsObject)
-              origSender ! summoner
-          }
+      future onSuccess successHandler(origSender).orElse(defaultSuccessHandler(origSender))
+      future onFailure failureHandler(origSender)
+  }
 
-        case HttpResponse(NotFound, _, _, _) =>
-          val message = s"No summoner found by name '$name' for region '$region'"
-          log.warning(message)
-          origSender ! Failure(new SummonerNotFound(message))
-
-        case HttpResponse(TooManyRequests, _, _, _) =>
-          val message = "Too many requests"
-          log.warning(message)
-          origSender ! Failure(new TooManyRequests(message))
-
-        case HttpResponse(ServiceUnavailable, _, _, _) =>
-          val message = "SummonerService not available"
-          log.warning(message)
-          origSender ! Failure(new ServiceNotAvailable(message))
-
-        case HttpResponse(status, _, _, _) =>
-          val message = s"Something went wrong. API call error code: ${status.intValue()}"
-          log.warning(message)
-          origSender ! Failure(new IllegalStateException(message))
+  def successHandler(origSender: ActorRef): PartialFunction[HttpResponse, Unit] = {
+    case HttpResponse(OK, _, entity, _) =>
+      Unmarshal(entity).to[String].onSuccess {
+        case result: String =>
+          val summoner = transform(result.parseJson.asJsObject)
+          origSender ! summoner
       }
-      future onFailure {
-        case e: Exception =>
-          log.error(s"request failed for some reason: ${e.getMessage}")
-          e.printStackTrace()
-      }
+
+    case HttpResponse(NotFound, _, _, _) =>
+      val message = s"No summoner found by name '$name' for region '$region'"
+      log.warning(message)
+      origSender ! Failure(new SummonerNotFound(message))
+  }
+
+  def failureHandler(origSender: ActorRef): PartialFunction[Throwable, Unit] = {
+    case e: Exception =>
+      log.error(s"request failed for some reason: ${e.getMessage}")
+      e.printStackTrace()
   }
 
   private def transform(riotResult: JsObject): Summoner = {

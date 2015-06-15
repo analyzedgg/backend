@@ -31,41 +31,14 @@ class MatchHistoryService(regionParam: String, summonerId: Long) extends Actor w
 
   override def receive: Receive = {
     case GetMatchHistory(beginIndex, endIndex) =>
-      val origSender: ActorRef = sender()
+      implicit val origSender: ActorRef = sender()
 
       val queryParams = Map("beginIndex" -> beginIndex.toString,
         "endIndex" -> endIndex.toString)
       val matchEndpoint: Uri = endpoint(queryParams)
 
       val future = riotRequest(RequestBuilding.Get(matchEndpoint))
-      future onSuccess {
-        case HttpResponse(OK, _, entity, _) =>
-          Unmarshal(entity).to[String].onSuccess {
-            case result: String =>
-              val matches = transform(result)
-              origSender ! MatchHistoryList(matches)
-          }
-
-        case HttpResponse(NotFound, _, _, _) =>
-          val message = s"No games found for summoner id '$summonerId' for region '$region'"
-          log.warning(message)
-          origSender ! Failure(new MatchNotFound(message))
-
-        case HttpResponse(TooManyRequests, _, _, _) =>
-          val message = "Too many requests"
-          log.warning(message)
-          origSender ! Failure(new TooManyRequests(message))
-
-        case HttpResponse(ServiceUnavailable, _, _, _) =>
-          val message = "MatchHistoryService not available"
-          log.warning(message)
-          origSender ! Failure(new ServiceNotAvailable(message))
-
-        case HttpResponse(status, _, _, _) =>
-          val message = s"Something went wrong. API call error code: ${status.intValue()}"
-          log.warning(message)
-          origSender ! Failure(new IllegalStateException(message))
-      }
+      future onSuccess successHandler(origSender).orElse(defaultSuccessHandler(origSender))
       future onFailure {
         case e: Exception =>
           println(s"request failed for some reason: ${e.getMessage}")
@@ -73,10 +46,26 @@ class MatchHistoryService(regionParam: String, summonerId: Long) extends Actor w
       }
   }
 
+  def successHandler(origSender: ActorRef): PartialFunction[HttpResponse, Unit] = {
+
+    case HttpResponse(OK, _, entity, _) =>
+      Unmarshal(entity).to[String].onSuccess {
+        case result: String =>
+          val matches = transform(result)
+          origSender ! MatchHistoryList(matches)
+      }
+
+    case HttpResponse(NotFound, _, _, _) =>
+      val message = s"No games found for summoner id '$summonerId' for region '$region'"
+      log.warning(message)
+      origSender ! Failure(new MatchNotFound(message))
+
+  }
+
   private def transform(riotResult: String): List[MatchHistory] = {
     val jsonObject = (new ObjectMapper).readValue(riotResult, classOf[Object])
 
-    val matches = JsonPath.query("$.matches[*]['queueType','matchDuration']", jsonObject).right.get.grouped(2).toList
+    val matches = JsonPath.query("$.matches[*]['queueType','matchDuration','matchCreation']", jsonObject).right.get.grouped(3).toList
     val participants = JsonPath.query("$.matches[*]['participants'][0]['championId']", jsonObject).right.get.toList
     val timeline = JsonPath.query("$.matches[*]['participants'][0]['timeline']['role','lane']", jsonObject).right.get.grouped(2).toList
     val stats = JsonPath.query("$.matches[*]['participants'][0]['stats']['minionsKilled','winner','kills','deaths','assists']", jsonObject).
@@ -86,6 +75,7 @@ class MatchHistoryService(regionParam: String, summonerId: Long) extends Actor w
     MatchHistory(
       matches(i)(0).toString,
       matches(i)(1).toString.toInt,
+      matches(i)(2).toString.toLong,
       PlayerStats(
         stats(i)(0).toString.toInt,
         stats(i)(2).toString.toInt,
