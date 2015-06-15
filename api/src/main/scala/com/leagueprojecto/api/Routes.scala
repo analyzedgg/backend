@@ -44,7 +44,6 @@ trait Routes extends JsonProtocols {
     case e: RiotService.ServiceNotAvailable   => complete(HttpResponse(ServiceUnavailable))
     case e: RiotService.TooManyRequests       => complete(HttpResponse(TooManyRequests))
     case e: SummonerService.SummonerNotFound  => complete(HttpResponse(NotFound))
-    case e: MatchHistoryService.MatchNotFound => complete(HttpResponse(NotFound))
     case _                                    => complete(HttpResponse(InternalServerError))
   }
 

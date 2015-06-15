@@ -1,6 +1,5 @@
 package com.leagueprojecto.api.services.riot
 
-import akka.actor.Status.Failure
 import akka.actor.{ActorLogging, ActorRef, Props, Actor}
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model.StatusCodes._
@@ -8,7 +7,6 @@ import akka.http.scaladsl.model.{HttpResponse, Uri}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.leagueprojecto.api.domain.{PlayerStats, MatchHistory}
-import com.leagueprojecto.api.services.riot.RiotService.{TooManyRequests, ServiceNotAvailable}
 import io.gatling.jsonpath.JsonPath
 
 object MatchHistoryService {
@@ -16,8 +14,6 @@ object MatchHistoryService {
   case class GetMatchHistory(beginIndex: Int = 0, endIndex: Int = 15)
 
   case class MatchHistoryList(matches: List[MatchHistory])
-
-  class MatchNotFound(message: String) extends Exception
 
   def props(region: String, summonerId: Long) = Props(new MatchHistoryService(region, summonerId))
 }
@@ -39,27 +35,22 @@ class MatchHistoryService(regionParam: String, summonerId: Long) extends Actor w
 
       val future = riotRequest(RequestBuilding.Get(matchEndpoint))
       future onSuccess successHandler(origSender).orElse(defaultSuccessHandler(origSender))
-      future onFailure {
-        case e: Exception =>
-          println(s"request failed for some reason: ${e.getMessage}")
-          e.printStackTrace()
-      }
+      future onFailure failureHandler
   }
 
   def successHandler(origSender: ActorRef): PartialFunction[HttpResponse, Unit] = {
-
     case HttpResponse(OK, _, entity, _) =>
       Unmarshal(entity).to[String].onSuccess {
         case result: String =>
           val matches = transform(result)
           origSender ! MatchHistoryList(matches)
       }
+  }
 
-    case HttpResponse(NotFound, _, _, _) =>
-      val message = s"No games found for summoner id '$summonerId' for region '$region'"
-      log.warning(message)
-      origSender ! Failure(new MatchNotFound(message))
-
+  def failureHandler: PartialFunction[Throwable, Unit] = {
+    case e: Exception =>
+      println(s"request failed for some reason: ${e.getMessage}")
+      e.printStackTrace()
   }
 
   private def transform(riotResult: String): List[MatchHistory] = {
