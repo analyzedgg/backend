@@ -6,7 +6,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.{HttpResponse, HttpRequest}
-import akka.stream.{ActorFlowMaterializer, FlowMaterializer}
+import akka.stream.{Materializer, ActorMaterializer}
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.leagueprojecto.api.services.riot.RiotService.{ServiceNotAvailable, TooManyRequests}
 
@@ -23,7 +23,7 @@ trait RiotService {
   private val config = context.system.settings.config
 
   implicit def executor: ExecutionContextExecutor = context.system.dispatcher
-  implicit val materializer: FlowMaterializer = ActorFlowMaterializer()
+  implicit val materializer: Materializer = ActorMaterializer()
 
   private val hostname: String = config.getString("riot.api-hostname")
   private val port: Int = config.getInt("riot.api-port")

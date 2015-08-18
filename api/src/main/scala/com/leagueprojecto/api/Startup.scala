@@ -2,12 +2,10 @@ package com.leagueprojecto.api
 
 import akka.actor._
 import akka.event.Logging
-import akka.http.ServerSettings
 import akka.http.scaladsl.Http
-import akka.stream.ActorFlowMaterializer
+import akka.stream.ActorMaterializer
 import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
-import com.leagueprojecto.api.services.{SummonerManager, MatchHistoryManager, MatchHistoryManager$, CacheService}
-import com.leagueprojecto.api.services.riot.{MatchHistoryService, SummonerService}
+import com.leagueprojecto.api.services.{SummonerManager, MatchHistoryManager, CacheService}
 import com.typesafe.config.ConfigFactory
 
 object Startup extends App with Routes {
@@ -16,7 +14,7 @@ object Startup extends App with Routes {
   override val config = ConfigFactory.load()
   override val logger = Logging(system, getClass)
 
-  implicit val materializer = ActorFlowMaterializer()
+  implicit val materializer = ActorMaterializer()
 
   // Services
   val summonerService: ActorRef = system.actorOf(SummonerManager.props)
