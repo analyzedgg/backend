@@ -10,7 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import akka.pattern.pipe
 
 object MatchHistoryManager {
-  case class GetMatches(region: String, summonerId: Long)
+  case class GetMatches(region: String, summonerId: Long, queueType: String)
 
   def props = Props[MatchHistoryManager]
 }
@@ -18,8 +18,8 @@ class MatchHistoryManager extends Actor {
   implicit val timeout: Timeout = 1.minute
 
   override def receive: Receive = {
-    case GetMatches(region, summonerId) =>
-      val matchCombiner = context.actorOf(MatchCombiner.props(region, summonerId))
+    case GetMatches(region, summonerId, queueType) =>
+      val matchCombiner = context.actorOf(MatchCombiner.props(region, summonerId, queueType))
 
       (matchCombiner ? GetAllMatches) collect {
         case AllMatches(list) => list

@@ -15,10 +15,12 @@ object MatchHistoryService {
 
   case class MatchHistoryList(matches: List[MatchHistory])
 
-  def props(region: String, summonerId: Long) = Props(new MatchHistoryService(region, summonerId))
+  def props(region: String, summonerId: Long, queueType: String) =
+    Props(new MatchHistoryService(region, summonerId, queueType))
 }
 
-class MatchHistoryService(regionParam: String, summonerId: Long) extends Actor with ActorLogging with RiotService {
+class MatchHistoryService(regionParam: String, summonerId: Long, queueType: String)
+  extends Actor with ActorLogging with RiotService {
 
   import MatchHistoryService._
 
@@ -29,8 +31,13 @@ class MatchHistoryService(regionParam: String, summonerId: Long) extends Actor w
     case GetMatchHistory(beginIndex, endIndex) =>
       implicit val origSender: ActorRef = sender()
 
-      val queryParams = Map("beginIndex" -> beginIndex.toString,
-        "endIndex" -> endIndex.toString)
+      var queryParams = Map(
+        "beginIndex" -> beginIndex.toString,
+        "endIndex" -> endIndex.toString
+      )
+
+      if ("" != queueType) queryParams += "rankedQueues" -> queueType
+
       val matchEndpoint: Uri = endpoint(queryParams)
 
       val future = riotRequest(RequestBuilding.Get(matchEndpoint))

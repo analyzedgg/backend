@@ -73,7 +73,7 @@ trait Routes extends JsonProtocols {
         pathEndOrSingleSlash {
           get {
             complete {
-              (cachedMatchHistoryService ? GetMatches(region, summonerId)).mapTo[CachedResponse[List[MatchHistory]]]
+              (cachedMatchHistoryService ? GetMatches(region, summonerId, queueType)).mapTo[CachedResponse[List[MatchHistory]]]
             }
           } ~ optionsSupport
         }
