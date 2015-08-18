@@ -33,6 +33,7 @@ trait Routes extends JsonProtocols {
   val cachedMatchHistoryService: ActorRef
 
   def regionMatcher = config.getString("riot.regions").r
+  def queueMatcher = config.getString("riot.queueTypes")
 
   val optionsSupport = {
     options {
@@ -65,12 +66,17 @@ trait Routes extends JsonProtocols {
 
   def matchhistoryRoute(implicit region: String) = {
     pathPrefix("matchhistory" / LongNumber) { summonerId =>
-      pathEndOrSingleSlash {
-        get {
-          complete {
-            (cachedMatchHistoryService ? GetMatches(region, summonerId)).mapTo[CachedResponse[List[MatchHistory]]]
-          }
-        } ~ optionsSupport
+      parameter("queue" ? "") { queueParam =>
+        var queueType = queueParam
+        if (!queueParam.matches(queueMatcher)) queueType = ""
+
+        pathEndOrSingleSlash {
+          get {
+            complete {
+              (cachedMatchHistoryService ? GetMatches(region, summonerId)).mapTo[CachedResponse[List[MatchHistory]]]
+            }
+          } ~ optionsSupport
+        }
       }
     }
   }
