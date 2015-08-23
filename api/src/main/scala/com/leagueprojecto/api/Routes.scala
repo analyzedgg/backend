@@ -66,14 +66,17 @@ trait Routes extends JsonProtocols {
 
   def matchhistoryRoute(implicit region: String) = {
     pathPrefix("matchhistory" / LongNumber) { summonerId =>
-      parameter("queue" ? "") { queueParam =>
+      parameters("queue" ? "", "champions" ? "") { (queueParam, championParam) =>
         var queueType = queueParam
         if (!queueParam.matches(queueMatcher)) queueType = ""
+
+        var championList = championParam
+        if (!championParam.matches("^(\\d{1,3}|,*)*$")) championList = ""
 
         pathEndOrSingleSlash {
           get {
             complete {
-              (cachedMatchHistoryService ? GetMatches(region, summonerId, queueType)).mapTo[CachedResponse[List[MatchHistory]]]
+              (cachedMatchHistoryService ? GetMatches(region, summonerId, queueType, championList)).mapTo[CachedResponse[List[MatchHistory]]]
             }
           } ~ optionsSupport
         }

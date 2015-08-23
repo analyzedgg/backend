@@ -64,7 +64,7 @@ class MatchHistoryServiceTest(_system: ActorSystem) extends BaseServiceTests(_sy
     actorRef ! GetMatchHistory(0, 15)
   }
 
-  class MockedMatchHistoryService(httpResponse: HttpResponse) extends MatchHistoryService("REGION", 123456798, "") {
+  class MockedMatchHistoryService(httpResponse: HttpResponse) extends MatchHistoryService("REGION", 123456798, "", "") {
     override lazy val riotConnectionFlow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest].map { request =>
       httpResponse
     }

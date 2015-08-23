@@ -10,10 +10,11 @@ object MatchCombiner {
   case object GetAllMatches
   case class AllMatches(list: List[MatchHistory])
 
-  def props(region: String, summonerId: Long, queueType: String) = Props(new MatchCombiner(region, summonerId, queueType))
+  def props(region: String, summonerId: Long, queueType: String, championList: String) =
+    Props(new MatchCombiner(region, summonerId, queueType, championList))
 }
-class MatchCombiner(region: String, summonerId: Long, queueType: String) extends Actor {
-  val matchHistoryService = context.actorOf(MatchHistoryService.props(region, summonerId, queueType))
+class MatchCombiner(region: String, summonerId: Long, queueType: String, championList: String) extends Actor {
+  val matchHistoryService = context.actorOf(MatchHistoryService.props(region, summonerId, queueType, championList))
 
   var matches: List[MatchHistory] = List.empty
   var originalSender = Actor.noSender

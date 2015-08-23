@@ -15,11 +15,11 @@ object MatchHistoryService {
 
   case class MatchHistoryList(matches: List[MatchHistory])
 
-  def props(region: String, summonerId: Long, queueType: String) =
-    Props(new MatchHistoryService(region, summonerId, queueType))
+  def props(region: String, summonerId: Long, queueType: String, championList: String) =
+    Props(new MatchHistoryService(region, summonerId, queueType, championList))
 }
 
-class MatchHistoryService(regionParam: String, summonerId: Long, queueType: String)
+class MatchHistoryService(regionParam: String, summonerId: Long, queueType: String, championList: String)
   extends Actor with ActorLogging with RiotService {
 
   import MatchHistoryService._
@@ -36,7 +36,8 @@ class MatchHistoryService(regionParam: String, summonerId: Long, queueType: Stri
         "endIndex" -> endIndex.toString
       )
 
-      if ("" != queueType) queryParams += "rankedQueues" -> queueType
+      if (queueType != "")    queryParams += "rankedQueues" -> queueType
+      if (championList != "") queryParams += "championIds" -> championList
 
       val matchEndpoint: Uri = endpoint(queryParams)
 
