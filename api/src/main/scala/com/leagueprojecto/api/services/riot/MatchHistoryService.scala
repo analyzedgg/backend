@@ -1,5 +1,6 @@
 package com.leagueprojecto.api.services.riot
 
+import akka.actor.Status.Failure
 import akka.actor.{ActorLogging, ActorRef, Props, Actor}
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model.StatusCodes._
@@ -7,6 +8,7 @@ import akka.http.scaladsl.model.{HttpResponse, Uri}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.leagueprojecto.api.domain.{PlayerStats, MatchHistory}
+import com.leagueprojecto.api.services.riot.SummonerService.SummonerNotFound
 import io.gatling.jsonpath.JsonPath
 
 object MatchHistoryService {
@@ -53,6 +55,11 @@ class MatchHistoryService(regionParam: String, summonerId: Long, queueType: Stri
           val matches = transform(result)
           origSender ! MatchHistoryList(matches)
       }
+
+    case HttpResponse(NotFound, _, _, _) =>
+      val message = s"No summoner found by id '$summonerId' for region '$region'"
+      log.warning(message)
+      origSender ! Failure(new SummonerNotFound(message))
   }
 
   def failureHandler: PartialFunction[Throwable, Unit] = {

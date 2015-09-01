@@ -1,5 +1,6 @@
 package com.leagueprojecto.api.services
 
+import akka.actor.Status.Failure
 import akka.actor.{Props, Actor}
 import com.leagueprojecto.api.domain.MatchHistory
 import com.leagueprojecto.api.services.MatchCombiner.{AllMatches, GetAllMatches}
@@ -34,5 +35,8 @@ class MatchCombiner(region: String, summonerId: Long, queueType: String, champio
     case MatchHistoryList(matchesResponse) =>
       matches = matches ::: matchesResponse
       originalSender ! AllMatches(matches)
+
+    case Failure(x) =>
+      originalSender ! Failure(x)
   }
 }
