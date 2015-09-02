@@ -44,6 +44,14 @@ class MatchHistoryRoute extends RoutesTest {
     }
   }
 
+  it should "return an empty response when the summoner id does not exist" in {
+    Get(s"$endpoint/$invalidSummonerId") ~> routes ~> check {
+      status shouldBe NotFound
+
+      responseAs[String] shouldBe ""
+    }
+  }
+
   it should "always send Options back on requests" in {
     Options(s"$endpoint/$validSummonerId") ~> routes ~> check {
       status shouldBe OK
