@@ -1,0 +1,71 @@
+{
+  "mockDirectory": "./mocks/",
+  "quiet": false,
+  "port": "7878",
+  "latency": 50,
+  "logRequestHeaders": false,
+  "webServices": {
+    "api/lol/euw/v2.2/matchhistory/20717177": {
+      "mockFile": "matchhistory/EUW20717177.json",
+      "latency": 20,
+      "verbs": ["get"]
+    },
+    "second": {
+      "verbs": ["delete", "post"],
+      "responses": {
+        "delete": {"httpStatus": 204},
+        "post": {
+          "contentType": "foobar",
+          "mockFile": "king.json"
+        }
+      }
+    },
+    "nested/ace": {
+      "mockFile": "ace.json",
+      "verbs": ["post", "get"],
+      "switch": "customerId"
+    },
+    "nested/ace2": {
+      "mockFile": "ace.json",
+      "verbs": ["post", "get"],
+      "switch": ["customerId","multitest"]
+    },
+    "var/:id": {
+      "mockFile": "xml/queen.xml",
+      "verbs": ["all"],
+      "switch": "id"
+    },
+    "login": {
+      "verbs": ["post"],
+      "switch": ["userId", "password"],
+      "responses": {
+        "post": {"httpStatus": 401, "mockFile": "sorry.json"}
+      },
+      "switchResponses": {
+        "userIduser1passwordgood": {"httpStatus": 200, "mockFile": "king.json"},
+        "userIdadminpasswordgood": {"httpStatus": 200}
+      }
+    },
+    "nested/aceinsleeve": {
+      "verbs": [
+        "post"
+      ],
+      "switch": "$..ItemId[(@.length-1)]",
+      "responses": {
+        "post": {"httpStatus": 200, "mockFile": "aceinsleeve.json"}
+      },
+      "switchResponses": {
+        "$..ItemId[(@.length-1)]4": {"httpStatus": 500, "mockFile": "ItemId4.aceinsleeve.json"}
+      }
+    },
+    "firstheaders": {
+      "mockFile": "king.json",
+      "contentType": "foobar",
+      "headers": {
+        "x-requested-by": "4c2df03a17a803c063f21aa86a36f6f55bdde1f85b89e49ee1b383f281d18c09c2ba30654090df3531cd2318e3c",
+        "dummyheader": "dummyvalue"
+      },
+      "verbs": ["get"]
+    }
+  }
+}
