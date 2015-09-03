@@ -25,15 +25,22 @@ trait RiotService {
   implicit def executor: ExecutionContextExecutor = context.system.dispatcher
   implicit val materializer: Materializer = ActorMaterializer()
 
-  private val hostname: String = config.getString("riot.api-hostname")
-  private val port: Int = config.getInt("riot.api-port")
-  private val api_key: String = config.getString("riot.api-key")
+  private val hostname: String = config.getString("riot.api.hostname")
+  private val port: Int = config.getInt("riot.api.port")
+  private val api_key: String = config.getString("riot.api.key")
 
   val region: String
   val service: String
 
-  lazy val riotConnectionFlow: Flow[HttpRequest, HttpResponse, Any] =
-    Http(context.system).outgoingConnectionTls(region + hostname, port)
+  lazy val riotConnectionFlow: Flow[HttpRequest, HttpResponse, Any] = {
+    val host = hostname.replace(":region", region)
+
+    if (config.getBoolean("riot.api.tls")) {
+      Http(context.system).outgoingConnectionTls(host, port)
+    } else {
+      Http(context.system).outgoingConnection(host, port)
+    }
+  }
 
   def endpoint(queryParams: Map[String, String] = Map.empty): Uri = {
     val queryString = (queryParams + ("api_key" -> api_key)).collect { case x => x._1 + "=" + x._2 }.mkString("&")
