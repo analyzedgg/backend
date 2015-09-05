@@ -5,13 +5,21 @@
   "latency": 50,
   "logRequestHeaders": false,
   "webServices": {
-    "api/lol/euw/v2.2/matchhistory/20717177": {
-      "mockFile": "matchhistory/EUW20717177.json",
-      "verbs": ["get"]
-    },
     "api/lol/euw/v1.4/summoner/by-name/Wagglez": {
       "verbs": ["get"],
       "mockFile": "summoner/EUWWagglez.json"
+    },
+    "api/lol/euw/v2.2/matchhistory/20717177": {
+      "mockFile": "matchhistory/EUW20717177.json","statusCode": 200,
+      "verbs": ["get"]
+    },
+    "api/lol/euw/v2.2/matchhistory/52477463": {
+      "switch": [
+        "beginIndex",
+        "endIndex"
+      ],
+      "verbs": ["get"],
+      "mockFile": "matchhistory/EUW52477463.json"
     }
   }
 }

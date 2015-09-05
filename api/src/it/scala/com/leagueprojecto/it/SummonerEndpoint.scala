@@ -8,6 +8,7 @@ import com.leagueprojecto.api.services.CacheService.CachedResponse
 
 class SummonerEndpoint extends EndpointTest {
   val endpoint = "/api/euw/summoner"
+  val nonExistingSummoner = "NonExistingSummonerName"
   val validSummoner = Summoner(52477463, "Wagglez", 781, 1441138071000L, 30)
 
   "Summoner endpoint" should "return a json response with a CachedResponse in it" in {
@@ -17,6 +18,13 @@ class SummonerEndpoint extends EndpointTest {
 
       val response = responseAs[CachedResponse[Summoner]]
       response.response shouldBe validSummoner
+    }
+  }
+
+  it should "return a 404 when the summoner does not exist" in {
+    Get(s"$endpoint/$nonExistingSummoner") ~> routes ~> check {
+      status shouldBe NotFound
+      responseAs[String] shouldBe ""
     }
   }
 }
