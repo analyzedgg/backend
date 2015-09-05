@@ -1,4 +1,5 @@
 import sbt._
+import io.gatling.sbt.GatlingPlugin
 
 object DefaultBuild extends Build {
   lazy val root =

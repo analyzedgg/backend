@@ -13,9 +13,7 @@ import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
 import com.leagueprojecto.api.services.CacheService.CachedResponse
 import com.leagueprojecto.api.services.MatchHistoryManager.GetMatches
 import com.leagueprojecto.api.services.SummonerManager.GetSummoner
-import com.leagueprojecto.api.services.riot.MatchHistoryService.GetMatchHistory
-import com.leagueprojecto.api.services.riot.SummonerService.GetSummonerByName
-import com.leagueprojecto.api.services.riot.{MatchHistoryService, RiotService, SummonerService}
+import com.leagueprojecto.api.services.riot.{RiotService, SummonerService}
 import com.typesafe.config.Config
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import scala.concurrent.ExecutionContextExecutor

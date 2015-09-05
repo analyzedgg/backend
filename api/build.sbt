@@ -27,9 +27,9 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-core-experimental" % akkaStreamVersion,
     "com.typesafe.akka" %% "akka-http-experimental" % akkaStreamVersion,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaStreamVersion,
-    "com.typesafe.akka" % "akka-testkit_2.11" % akkaVersion,
     "ch.qos.logback" % "logback-classic" % logbackVersion % "runtime",
-    "com.typesafe.akka" %% "akka-http-testkit-experimental" % akkaStreamVersion % "test",
+    "com.typesafe.akka" % "akka-testkit_2.11" % akkaVersion % "test,it",
+    "com.typesafe.akka" %% "akka-http-testkit-experimental" % akkaStreamVersion % "test,it",
     "org.scalatest"     %% "scalatest" % scalaTestVersion % "test,it",
     "io.gatling"        % "jsonpath_2.11" % jsonPathVersion,
     "com.fasterxml.jackson.core" % "jackson-databind" % jacksonCore
