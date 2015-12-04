@@ -15,6 +15,5 @@ abstract class RoutesTest extends FlatSpec with Matchers with GivenWhenThen with
   val summonerProbe = new TestProbe(system)
   val matchHistoryProbe = new TestProbe(system)
 
-  override val cachedSummonerService: ActorRef = summonerProbe.ref
   override val cachedMatchHistoryService: ActorRef = matchHistoryProbe.ref
 }

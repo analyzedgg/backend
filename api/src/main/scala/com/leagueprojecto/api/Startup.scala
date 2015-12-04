@@ -17,14 +17,10 @@ object Startup extends App with Routes {
   implicit val materializer = ActorMaterializer()
 
   // Services
-  val summonerService: ActorRef = system.actorOf(SummonerManager.props)
   val matchHistoryService: ActorRef = system.actorOf(MatchHistoryManager.props)
 
   // Service caches
-  val summonerCacheTime = config.getLong("riot.services.summonerbyname.cacheTime")
   val matchhistoryCacheTime = config.getLong("riot.services.matchhistory.cacheTime")
-  override val cachedSummonerService: ActorRef =
-    system.actorOf(CacheService.props[Summoner](summonerService, summonerCacheTime))
   override val cachedMatchHistoryService: ActorRef =
     system.actorOf(CacheService.props[List[MatchHistory]](matchHistoryService, matchhistoryCacheTime))
 

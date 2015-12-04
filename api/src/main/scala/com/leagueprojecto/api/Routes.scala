@@ -12,6 +12,7 @@ import akka.util.Timeout
 import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
 import com.leagueprojecto.api.services.CacheService.CachedResponse
 import com.leagueprojecto.api.services.MatchHistoryManager.GetMatches
+import com.leagueprojecto.api.services.SummonerManager
 import com.leagueprojecto.api.services.SummonerManager.GetSummoner
 import com.leagueprojecto.api.services.riot.{RiotService, SummonerService}
 import com.typesafe.config.Config
@@ -27,7 +28,6 @@ trait Routes extends JsonProtocols {
   def config: Config
   val logger: LoggingAdapter
 
-  val cachedSummonerService: ActorRef
   val cachedMatchHistoryService: ActorRef
 
   def regionMatcher = config.getString("riot.regions").r
@@ -55,7 +55,8 @@ trait Routes extends JsonProtocols {
       pathEndOrSingleSlash {
         get {
           complete {
-            (cachedSummonerService ? GetSummoner(region, name)).mapTo[CachedResponse[Summoner]]
+            val summonerManager = system.actorOf(SummonerManager.props)
+            (summonerManager ? GetSummoner(region, name)).mapTo[Summoner]
           }
         } ~ optionsSupport
       }

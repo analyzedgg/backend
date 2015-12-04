@@ -18,6 +18,7 @@ libraryDependencies ++= {
   val logbackVersion = "1.1.2"
   val jsonPathVersion: String = "0.6.4"
   val jacksonCore: String = "2.5.3"
+  val couchDbScalaVersion: String = "0.6.0"
 
   Seq(
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
@@ -27,12 +28,13 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-core-experimental" % akkaStreamVersion,
     "com.typesafe.akka" %% "akka-http-experimental" % akkaStreamVersion,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaStreamVersion,
-    "ch.qos.logback" % "logback-classic" % logbackVersion % "runtime",
+    "ch.qos.logback"    % "logback-classic" % logbackVersion % "runtime",
     "com.typesafe.akka" % "akka-testkit_2.11" % akkaVersion % "test,it",
     "com.typesafe.akka" %% "akka-http-testkit-experimental" % akkaStreamVersion % "test,it",
     "org.scalatest"     %% "scalatest" % scalaTestVersion % "test,it",
     "io.gatling"        % "jsonpath_2.11" % jsonPathVersion,
-    "com.fasterxml.jackson.core" % "jackson-databind" % jacksonCore
+    "com.fasterxml.jackson.core" % "jackson-databind" % jacksonCore,
+    "com.ibm"           %% "couchdb-scala" % couchDbScalaVersion
   )
 }
 

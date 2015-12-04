@@ -13,7 +13,7 @@ import spray.json._
 
 object SummonerService {
   case object GetSummonerByName
-  class SummonerNotFound(message: String) extends Exception
+  case class SummonerNotFound(message: String) extends Exception
 
   def props(region: String, name: String): Props = Props(new SummonerService(region, name))
 }
@@ -40,13 +40,14 @@ class SummonerService(regionParam: String, name: String) extends Actor with Acto
       Unmarshal(entity).to[String].onSuccess {
         case result: String =>
           val summoner = transform(result.parseJson.asJsObject)
+          println(s"summoner found! $summoner")
           origSender ! summoner
       }
 
     case HttpResponse(NotFound, _, _, _) =>
       val message = s"No summoner found by name '$name' for region '$region'"
       log.warning(message)
-      origSender ! Failure(new SummonerNotFound(message))
+      origSender ! new SummonerNotFound(message)
   }
 
   def failureHandler(origSender: ActorRef): PartialFunction[Throwable, Unit] = {

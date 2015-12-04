@@ -14,14 +14,10 @@ abstract class EndpointTest extends FlatSpec with Matchers with GivenWhenThen wi
   override val logger: LoggingAdapter = system.log
 
   // Services
-  val summonerService: ActorRef = system.actorOf(SummonerManager.props)
   val matchHistoryService: ActorRef = system.actorOf(MatchHistoryManager.props)
 
   // Service caches
-  val summonerCacheTime = 5000
   val matchhistoryCacheTime = 5000
-  override val cachedSummonerService: ActorRef =
-    system.actorOf(CacheService.props[Summoner](summonerService, summonerCacheTime))
   override val cachedMatchHistoryService: ActorRef =
     system.actorOf(CacheService.props[List[MatchHistory]](matchHistoryService, matchhistoryCacheTime))
 }
