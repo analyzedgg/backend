@@ -40,9 +40,6 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
       stop()
     case Event(DatabaseService.NoSummonerFound, stateData) =>
       goto(RetrievingFromRiot) using stateData
-    case _ =>
-      log.error("Error in retrievingFromDb step")
-      stop()
   }
 
   when(RetrievingFromRiot) {
@@ -54,9 +51,6 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
       stop()
     case Event(failure: Failure, (Some(RequestData(sender, _)), _)) =>
       sender ! failure
-      stop()
-    case _ =>
-      log.error("Error in retrievingFromRiot step")
       stop()
   }
 
@@ -92,6 +86,12 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
         case failData =>
           log.error(s"Something went wrong when going from RetrievingFromRiot -> PersistingToDb, got data: $failData")
       }
+  }
+
+  whenUnhandled {
+    case Event(msg, _) =>
+      log.error(s"Got unhandled message ($msg) in $stateName")
+      stop()
   }
 }
 

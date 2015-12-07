@@ -1,6 +1,5 @@
 package com.leagueprojecto.api.services.riot
 
-import akka.actor.Status.Failure
 import akka.actor.{ActorLogging, ActorRef, Props, Actor}
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model._
@@ -8,7 +7,6 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.leagueprojecto.api.JsonProtocols
 import com.leagueprojecto.api.domain.Summoner
-import com.leagueprojecto.api.services.riot.RiotService.{TooManyRequests, ServiceNotAvailable}
 import spray.json._
 
 object SummonerService {
@@ -18,10 +16,9 @@ object SummonerService {
   def props(region: String, name: String): Props = Props(new SummonerService(region, name))
 }
 
-class SummonerService(regionParam: String, name: String) extends Actor with ActorLogging with RiotService with JsonProtocols {
+class SummonerService(override val region: String, name: String) extends Actor with ActorLogging with RiotService with JsonProtocols {
   import SummonerService._
 
-  override val region = regionParam
   override val service = summonerByName + name
 
   override def receive: Receive = {

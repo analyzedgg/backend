@@ -10,11 +10,10 @@ import akka.http.scaladsl.server.ExceptionHandler
 import akka.pattern.ask
 import akka.util.Timeout
 import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
-import com.leagueprojecto.api.services.CacheService.CachedResponse
 import com.leagueprojecto.api.services.MatchHistoryManager.GetMatches
-import com.leagueprojecto.api.services.SummonerManager
+import com.leagueprojecto.api.services.{MatchHistoryManager, SummonerManager}
 import com.leagueprojecto.api.services.SummonerManager.GetSummoner
-import com.leagueprojecto.api.services.riot.{RiotService, SummonerService}
+import com.leagueprojecto.api.services.riot.{RecentMatchesService, RiotService, SummonerService}
 import com.typesafe.config.Config
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import scala.concurrent.ExecutionContextExecutor
@@ -27,8 +26,6 @@ trait Routes extends JsonProtocols {
 
   def config: Config
   val logger: LoggingAdapter
-
-  val cachedMatchHistoryService: ActorRef
 
   def regionMatcher = config.getString("riot.regions").r
   def queueMatcher = config.getString("riot.queueTypes")
@@ -75,7 +72,11 @@ trait Routes extends JsonProtocols {
         pathEndOrSingleSlash {
           get {
             complete {
-              (cachedMatchHistoryService ? GetMatches(region, summonerId, queueType, championList)).mapTo[CachedResponse[List[MatchHistory]]]
+              //testing:
+//              val recentMatchesTest = system.actorOf(RecentMatchesService.props(region, summonerId, queueType, championParam))
+//              (recentMatchesTest ? RecentMatchesService.GetRecentMatchIds(10)).mapTo[Seq[Long]].foreach(println)
+              "test"
+//              (cachedMatchHistoryService ? GetMatches(region, summonerId, queueType, championList)).mapTo[CachedResponse[List[MatchHistory]]]
             }
           } ~ optionsSupport
         }

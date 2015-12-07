@@ -4,8 +4,6 @@ import akka.actor._
 import akka.event.Logging
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
-import com.leagueprojecto.api.services.{SummonerManager, MatchHistoryManager, CacheService}
 import com.typesafe.config.ConfigFactory
 
 object Startup extends App with Routes {
@@ -15,14 +13,6 @@ object Startup extends App with Routes {
   override val logger = Logging(system, getClass)
 
   implicit val materializer = ActorMaterializer()
-
-  // Services
-  val matchHistoryService: ActorRef = system.actorOf(MatchHistoryManager.props)
-
-  // Service caches
-  val matchhistoryCacheTime = config.getLong("riot.services.matchhistory.cacheTime")
-  override val cachedMatchHistoryService: ActorRef =
-    system.actorOf(CacheService.props[List[MatchHistory]](matchHistoryService, matchhistoryCacheTime))
 
   // Bind the HTTP endpoint. Specify http.interface and http.port in the configuration
   // to change the address and port to bind to.
