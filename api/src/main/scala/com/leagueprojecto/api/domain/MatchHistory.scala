@@ -1,6 +1,7 @@
 package com.leagueprojecto.api.domain
 
 case class MatchHistory(
+                         matchId: Long,
                          queueType: String,
                          matchDuration: Int,
                          matchCreation: Long,

@@ -73,10 +73,9 @@ trait Routes extends JsonProtocols {
           get {
             complete {
               //testing:
-//              val recentMatchesTest = system.actorOf(RecentMatchesService.props(region, summonerId, queueType, championParam))
-//              (recentMatchesTest ? RecentMatchesService.GetRecentMatchIds(10)).mapTo[Seq[Long]].foreach(println)
+              val recentMatchesTest = system.actorOf(RecentMatchesService.props(region, summonerId, queueType, championParam))
+              (recentMatchesTest ? RecentMatchesService.GetRecentMatchIds(10)).mapTo[Seq[Long]].foreach(println)
               "test"
-//              (cachedMatchHistoryService ? GetMatches(region, summonerId, queueType, championList)).mapTo[CachedResponse[List[MatchHistory]]]
             }
           } ~ optionsSupport
         }
