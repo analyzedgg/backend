@@ -1,6 +1,6 @@
 package com.leagueprojecto.api
 
-import akka.actor.{ActorSystem, ActorRef}
+import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes._
@@ -9,11 +9,10 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.pattern.ask
 import akka.util.Timeout
-import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
-import com.leagueprojecto.api.services.MatchHistoryManager.GetMatches
-import com.leagueprojecto.api.services.{MatchHistoryManager, SummonerManager}
+import com.leagueprojecto.api.domain.Summoner
+import com.leagueprojecto.api.services.SummonerManager
 import com.leagueprojecto.api.services.SummonerManager.GetSummoner
-import com.leagueprojecto.api.services.riot.{RecentMatchesService, RiotService, SummonerService}
+import com.leagueprojecto.api.services.riot.{MatchService, RiotService, SummonerService}
 import com.typesafe.config.Config
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import scala.concurrent.ExecutionContextExecutor
@@ -73,8 +72,8 @@ trait Routes extends JsonProtocols {
           get {
             complete {
               //testing:
-              val recentMatchesTest = system.actorOf(RecentMatchesService.props(region, summonerId, queueType, championParam))
-              (recentMatchesTest ? RecentMatchesService.GetRecentMatchIds(10)).mapTo[Seq[Long]].foreach(println)
+              val recentMatchesTest = system.actorOf(MatchService.props(region, 1605037182))
+              (recentMatchesTest ? MatchService.GetMatch).foreach(println)
               "test"
             }
           } ~ optionsSupport

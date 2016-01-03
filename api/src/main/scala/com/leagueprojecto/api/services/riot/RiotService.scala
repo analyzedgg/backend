@@ -71,6 +71,6 @@ trait RiotService {
 
   // Services
   val summonerByName = config.getString("riot.services.summonerbyname.endpoint")
-  val matchHistoryBySummonerId = config.getString("riot.services.matchhistory.endpoint")
+  val matchById = config.getString("riot.services.match.endpoint")
   val matchlistBySummonerId = config.getString("riot.services.matchlist.endpoint")
 }

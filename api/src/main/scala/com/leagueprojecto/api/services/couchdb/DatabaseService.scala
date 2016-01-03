@@ -1,13 +1,11 @@
 package com.leagueprojecto.api.services.couchdb
 
 import akka.actor.{ActorLogging, Props, Actor}
-import akka.stream.{ActorMaterializer, Materializer}
 import com.ibm.couchdb.Res.Error
 import com.ibm.couchdb.{CouchException, TypeMapping, CouchDb}
-import com.leagueprojecto.api.domain.{MatchHistory, Summoner}
+import com.leagueprojecto.api.domain.{MatchDetail, Summoner}
 import org.http4s.Status.NotFound
 
-import scala.concurrent.ExecutionContextExecutor
 import scalaz.{\/-, -\/}
 
 object DatabaseService {
@@ -37,7 +35,7 @@ class DatabaseService extends Actor with ActorLogging {
 
   val couch = CouchDb(hostname, port)
   val summonerMapping = TypeMapping(classOf[Summoner] -> "Summoner")
-  val matchMapping = TypeMapping(classOf[MatchHistory] -> "MatchHistory")
+  val matchMapping = TypeMapping(classOf[MatchDetail] -> "MatchHistory")
   val summonerDb = couch.db("summoner-db", summonerMapping)
   val matchesDb = couch.db("matches-db", matchMapping)
 
@@ -59,7 +57,7 @@ class DatabaseService extends Actor with ActorLogging {
 
     case GetMatches(region, summonerId, matchIds) =>
       val id = s"$region:$summonerId"
-      matchesDb.docs.getMany[MatchHistory](matchIds.map(key => s"$id:$key")).attemptRun match {
+      matchesDb.docs.getMany[MatchDetail](matchIds.map(key => s"$id:$key")).attemptRun match {
         case \/-(matchesDocs) =>
           sender() ! matchesDocs.getDocsData
       }

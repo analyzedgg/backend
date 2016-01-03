@@ -1,6 +1,6 @@
 package com.leagueprojecto.api.domain
 
-case class Matchlist(
+case class Match(
                     timestamp: Long,
                     champion: Int,
                     region: String,

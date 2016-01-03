@@ -1,7 +1,7 @@
 package com.leagueprojecto.api.services
 
 import akka.actor.{ActorLogging, FSM, ActorRef, Props}
-import com.leagueprojecto.api.domain.MatchHistory
+import com.leagueprojecto.api.domain.MatchDetail
 import com.leagueprojecto.api.services.MatchHistoryManager.{StateData, State}
 import com.leagueprojecto.api.services.couchdb.DatabaseService
 import com.leagueprojecto.api.services.riot.RecentMatchesService
@@ -26,7 +26,7 @@ object MatchHistoryManager {
 
   case class RequestData(sender: ActorRef, getMatches: GetMatches)
 
-  case class StateData(requestData: Option[RequestData], matches: Map[Long, Option[MatchHistory]])
+  case class StateData(requestData: Option[RequestData], matches: Map[Long, Option[MatchDetail]])
 
   def props = Props[MatchHistoryManager]
 }
@@ -47,7 +47,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
   when(RetrievingRecentMatchIdsFromRiot) {
     case Event(matchIds: Seq[Long], StateData(Some(RequestData(sender, _)), _)) if matchIds.isEmpty =>
       // In case there are no match ids, return an empty MatchHistory Seq back to the sender.
-      sender ! Seq.empty[MatchHistory]
+      sender ! Seq.empty[MatchDetail]
       stop()
     case Event(matchIds: Seq[Long], state) =>
       // create the empty matchesMap which are to be filled by either the Db or Riot
@@ -59,7 +59,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
   }
 
   when(RetrievingFromDb) {
-    case Event(matchHistories: Seq[MatchHistory], StateData(Some(RequestData(sender, msg)), matches)) =>
+    case Event(matchHistories: Seq[MatchDetail], StateData(Some(RequestData(sender, msg)), matches)) =>
       val mergedMatches = matches ++ matchHistories.map(m => m.matchId -> Some(m))
 
       if (!hasEmptyValues(mergedMatches)) {
@@ -71,7 +71,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
   }
 
   when(RetrievingFromRiot) {
-    case Event(matchHistories: Seq[MatchHistory], StateData(Some(RequestData(sender, msg)), matches)) =>
+    case Event(matchHistories: Seq[MatchDetail], StateData(Some(RequestData(sender, msg)), matches)) =>
       val mergedMatches = matches ++ matchHistories.map(m => m.matchId -> Some(m))
 
       // todo: write `matchHistories` to db, would be nicer in the transition, but how can we distinguish new matches from Riot there?
@@ -123,11 +123,11 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
   }
 
 
-  def hasEmptyValues(mergedMatches: Map[Long, Option[MatchHistory]]): Boolean = {
+  private def hasEmptyValues(mergedMatches: Map[Long, Option[MatchDetail]]): Boolean = {
     mergedMatches.exists(_._2.isEmpty)
   }
 
-  def getValues(mergedMatches: Map[Long, Option[MatchHistory]]): Seq[MatchHistory] = {
+  private def getValues(mergedMatches: Map[Long, Option[MatchDetail]]): Seq[MatchDetail] = {
     mergedMatches.values.map(_.get).toSeq
   }
 }

@@ -3,10 +3,10 @@ package com.leagueprojecto.api.services.riot
 import akka.actor.{Props, ActorSystem}
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.stream.scaladsl.Flow
-import com.leagueprojecto.api.services.riot.MatchHistoryService.{MatchHistoryList, GetMatchHistory}
+import com.leagueprojecto.api.services.riot.MatchService.{MatchHistoryList, GetMatch}
 import akka.http.scaladsl.model.StatusCodes._
 
-class MatchHistoryServiceTest(_system: ActorSystem) extends BaseServiceTests(_system) {
+class MatchDetailServiceTest(_system: ActorSystem) extends BaseServiceTests(_system) {
 
   def this() = this(ActorSystem("MatchHistoryServiceTest"))
 
@@ -58,13 +58,13 @@ class MatchHistoryServiceTest(_system: ActorSystem) extends BaseServiceTests(_sy
 
   def createActorAndSendMessage(response: HttpResponse): Unit = {
     And("a SummonerService actor")
-    val actorRef = system.actorOf(Props(new MockedMatchHistoryService(response)))
+    val actorRef = system.actorOf(Props(new MockedMatchService(response)))
 
     When("summoner information is requested")
-    actorRef ! GetMatchHistory(0, 15)
+    actorRef ! GetMatch(0, 15)
   }
 
-  class MockedMatchHistoryService(httpResponse: HttpResponse) extends MatchHistoryService("REGION", 123456798, "", "") {
+  class MockedMatchService(httpResponse: HttpResponse) extends MatchService("REGION", 123456798, "", "") {
     override lazy val riotConnectionFlow: Flow[HttpRequest, HttpResponse, Any] = Flow[HttpRequest].map { request =>
       httpResponse
     }

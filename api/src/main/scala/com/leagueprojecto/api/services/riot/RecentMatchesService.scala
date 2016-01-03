@@ -6,7 +6,7 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.{HttpResponse, Uri}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.leagueprojecto.api.JsonProtocols
-import com.leagueprojecto.api.domain.Matchlist
+import com.leagueprojecto.api.domain.Match
 import com.leagueprojecto.api.services.riot.RecentMatchesService.GetRecentMatchIds
 import spray.json._
 
@@ -26,13 +26,15 @@ with RiotService with ActorLogging with JsonProtocols {
     case GetRecentMatchIds(amount) =>
       implicit val origSender = sender()
 
-      var queryParams = Map(
-        "beginIndex" -> "0",
-        "endIndex" -> amount.toString
-      )
-
-      if (queueType != "")    queryParams += "rankedQueues" -> queueType
-      if (championList != "") queryParams += "championIds" -> championList
+      // riot service was giving 500 at the time for begin and end index 0 and 100 while it worked at first
+      val queryParams = Map.empty[String, String]
+//      var queryParams = Map(
+//        "beginIndex" -> "0",
+//        "endIndex" -> amount.toString
+//      )
+//
+//      if (queueType != "")    queryParams += "rankedQueues" -> queueType
+//      if (championList != "") queryParams += "championIds" -> championList
 
       val matchlistEndpoint: Uri = endpoint(queryParams)
 
@@ -47,7 +49,7 @@ with RiotService with ActorLogging with JsonProtocols {
         case result: String =>
           val matchlist = transform(result.parseJson.asJsObject)
           println(s"matches found! $matchlist")
-          origSender ! matchlist.map(_.matchId).toSeq
+          origSender ! matchlist.map(_.matchId).toSeq.take(10)
       }
   }
 
@@ -56,8 +58,8 @@ with RiotService with ActorLogging with JsonProtocols {
       log.error(e, s"request failed for some reason")
   }
 
-  private def transform(riotResult: JsObject): List[Matchlist] = {
+  private def transform(riotResult: JsObject): List[Match] = {
     val firstKey = riotResult.fields.keys.head
-    riotResult.fields.get(firstKey).get.convertTo[List[Matchlist]]
+    riotResult.fields.get(firstKey).get.convertTo[List[Match]]
   }
 }

@@ -6,7 +6,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.testkit.TestActor
-import com.leagueprojecto.api.domain.{PlayerStats, MatchHistory}
+import com.leagueprojecto.api.domain.{PlayerStats, MatchDetail}
 import com.leagueprojecto.api.services.CacheService.CachedResponse
 import com.leagueprojecto.api.services.MatchHistoryManager.GetMatches
 import com.leagueprojecto.api.services.riot.SummonerService.SummonerNotFound
@@ -19,14 +19,14 @@ class MatchHistoryRoute extends RoutesTest {
 
   val validPlayerStats = PlayerStats(10, 5, 3, 2)
   val validHistory =
-    MatchHistory("RANKED_SOLO_5x5", 1600, 1432328493438L, validPlayerStats, 100, "DUO_SUPPORT", "BOTTOM", winner = true)
+    MatchDetail("RANKED_SOLO_5x5", 1600, 1432328493438L, validPlayerStats, 100, "DUO_SUPPORT", "BOTTOM", winner = true)
   val validHistoryList = List(validHistory)
 
   matchHistoryProbe.setAutoPilot(new TestActor.AutoPilot {
     def run(sender: ActorRef, msg: Any): TestActor.AutoPilot = {
       msg match {
         case GetMatches(_, 123456789, _, _) =>
-          sender ! CachedResponse[List[MatchHistory]](validHistoryList, 1010101010)
+          sender ! CachedResponse[List[MatchDetail]](validHistoryList, 1010101010)
         case GetMatches(_, 987654321, _, _) =>
           sender ! Failure(new SummonerNotFound(""))
       }
@@ -39,7 +39,7 @@ class MatchHistoryRoute extends RoutesTest {
       status shouldBe OK
       contentType shouldBe `application/json`
 
-      val response = responseAs[CachedResponse[List[MatchHistory]]]
+      val response = responseAs[CachedResponse[List[MatchDetail]]]
       response.response shouldBe validHistoryList
     }
   }
