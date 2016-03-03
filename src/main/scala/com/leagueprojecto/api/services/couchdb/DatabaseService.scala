@@ -24,6 +24,8 @@ object DatabaseService {
 
   case object SummonerSaved
 
+  case object MatchesSaved
+
 }
 
 class DatabaseService extends Actor with ActorLogging {
@@ -59,22 +61,15 @@ class DatabaseService extends Actor with ActorLogging {
 
     case GetMatches(region, summonerId, matchIds) =>
       val id = s"$region:$summonerId"
-      summonerDb.docs.getMany[Summoner](Seq("euw:Minikoen", "euw:Wagglez", "sdf")).attemptRun match {
+      val decoratedIds: Seq[String] = matchIds.map(key => s"$id:$key")
+      matchesDb.docs.getMany.queryIncludeDocsAllowMissing[MatchDetail](decoratedIds).attemptRun match {
         case \/-(matchesDocs) =>
-          println("results: ")
-          println(matchesDocs.getDocsData)
+          log.info(s"Yay, got ${matchesDocs.getDocsData.size} matches from Db")
           sender() ! matchesDocs.getDocsData
         case -\/(e) =>
           log.error(s"Error retrieving matches ($matchIds) from Db")
           e.printStackTrace()
       }
-//      matchesDb.docs.getMany[MatchDetail](matchIds.map(key => s"$id:$key")).attemptRun match {
-//        case \/-(matchesDocs) =>
-//          sender() ! matchesDocs.getDocsData
-//        case -\/(e) =>
-//          log.error(s"Error retrieving matches ($matchIds) from Db")
-//          e.printStackTrace()
-//      }
 
     case SaveSummoner(region, summoner) =>
       val id = s"$region:${summoner.name}"
@@ -96,7 +91,7 @@ class DatabaseService extends Actor with ActorLogging {
       matchesDb.docs.createMany(matchesById).attemptRun match {
         case \/-(_) =>
           log.info("Yay, matches are saved!")
-          sender() ! SummonerSaved
+          sender() ! MatchesSaved
         case -\/(e) =>
           log.error(s"Error saving matches ($id) in Db")
           println(e)

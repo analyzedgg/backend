@@ -48,8 +48,8 @@ with RiotService with ActorLogging with JsonProtocols {
       Unmarshal(entity).to[String].onSuccess {
         case result: String =>
           val matchlist = transform(result.parseJson.asJsObject)
-          println(s"matches found! $matchlist")
-          origSender ! matchlist.map(_.matchId).toSeq.take(10)
+          println(s"${matchlist.size} matches found!")
+          origSender ! matchlist.map(_.matchId).toSeq.take(5)
       }
   }
 

@@ -4,9 +4,10 @@ import akka.actor.{ActorLogging, FSM, ActorRef, Props}
 import com.leagueprojecto.api.domain.MatchDetail
 import com.leagueprojecto.api.services.MatchHistoryManager.{StateData, State}
 import com.leagueprojecto.api.services.couchdb.DatabaseService
-import com.leagueprojecto.api.services.riot.{MatchService, RecentMatchesService}
-import akka.pattern.ask
-import scala.concurrent.ExecutionContextExecutor
+import com.leagueprojecto.api.services.couchdb.DatabaseService.{MatchesSaved, SaveMatches}
+import com.leagueprojecto.api.services.riot.RecentMatchesService
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object MatchHistoryManager {
 
@@ -52,7 +53,6 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
     case Event(matchIds: Seq[Long], state) =>
       // create the empty matchesMap which are to be filled by either the Db or Riot
       val matchesMap = matchIds.map(m => m -> None).toMap
-      log.info(s"Match ids from rito $matchesMap")
       goto(RetrievingFromDb) using state.copy(matches = matchesMap)
 
     // todo: handle riot errors
@@ -71,31 +71,25 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
   }
 
   when(RetrievingFromRiot) {
-    case Event(matchDetails: Seq[MatchDetail], StateData(Some(RequestData(sender, msg)), matches)) =>
+    case Event(matchDetails: Seq[MatchDetail], StateData(Some(RequestData(sender, msg @ GetMatches(region, summonerId, _, _))), matches)) =>
+
+      // Insert the new matchDetails into the database
+      dbService ! SaveMatches(region, summonerId, matchDetails)
+
       val mergedMatches = matches ++ matchDetails.map(m => m.matchId -> Some(m))
+      sender ! mergedMatches
 
-      matchDetails.map(_.toString).foreach(println)
-      println("")
-      println("")
-      mergedMatches.map(_.toString).foreach(println)
-      println("")
-      // todo: write `matchDetails` to db, would be nicer in the transition, but how can we distinguish new matches from Riot there?
-
-      if (!hasEmptyValues(mergedMatches)) {
-        sender ! mergedMatches
-        stop()
-      } else {
-        log.error("Got response back from Riot, but matchDetails is still not fully filled.")
-        stop()
-      }
-
+      goto(PersistingToDb) using StateData(Some(RequestData(sender, msg)), mergedMatches)
 
     // todo: handle riot errors
   }
 
-  when(PersistingToDb) {
-    //case Event(MatchHistoriesSaved, _) => stop()
-    case _ => stop()
+  when(PersistingToDb, stateTimeout = 10.seconds) {
+    case Event(MatchesSaved, _) =>
+      log.info("Matches were saves correctly, stopping actor")
+      stop()
+    case _ =>
+      stop()
   }
 
   onTransition {
@@ -119,10 +113,11 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
 
     case RetrievingFromDb -> RetrievingFromRiot =>
       nextStateData match {
-        case StateData(Some(RequestData(_, _)), matches) =>
+        case StateData(Some(RequestData(_, GetMatches(region, summonerId, _, _))), matches) =>
           val matchesToRetrieve = matches.filter(_._2.isEmpty).keys
           log.info(s"going to get matches: [$matchesToRetrieve] from riot")
-          //val matchesActor = context.actorOf(MatchService.props(region, summonerId, queueType, championList))
+          val matchesActor = context.actorOf(MatchCombiner.props(region, summonerId, matchesToRetrieve.toSeq))
+          matchesActor ! MatchCombiner.GetMatches
       }
 
     case RetrievingFromRiot -> PersistingToDb =>

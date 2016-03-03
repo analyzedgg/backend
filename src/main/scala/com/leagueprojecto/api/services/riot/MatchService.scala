@@ -7,6 +7,7 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.{HttpResponse, Uri}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.leagueprojecto.api.domain.{MatchDetail, PlayerStats}
+import com.leagueprojecto.api.services.riot.MatchService.GetMatch
 import com.leagueprojecto.api.services.riot.SummonerService.SummonerNotFound
 import org.json4s.native.JsonMethods._
 import org.json4s._
@@ -16,10 +17,10 @@ object MatchService {
 
   case object GetMatch
 
-  def props(regionParam: String, matchId: Long) = Props(new MatchService(regionParam, matchId))
+  def props(regionParam: String, summonerId: Long, matchId: Long) = Props(new MatchService(regionParam, summonerId, matchId))
 }
 
-class MatchService(regionParam: String, matchId: Long)
+class MatchService(regionParam: String, summonerId: Long, matchId: Long)
   extends Actor with ActorLogging with RiotService {
 
   import MatchService._
@@ -43,7 +44,9 @@ class MatchService(regionParam: String, matchId: Long)
       Unmarshal(entity).to[String].onSuccess {
         case result: String =>
           val matchDetails = transform(result)
-          origSender ! matchDetails
+          log.debug(s"got match back: $matchDetails")
+          val singleMatch: MatchDetail = matchDetails.filter(_.summonerId == summonerId).head
+          origSender ! singleMatch
       }
 
     case HttpResponse(NotFound, _, _, _) =>
@@ -74,8 +77,7 @@ class MatchService(regionParam: String, matchId: Long)
       ((pId \ "participantId").extract[Int], (pId \ "player" \ "summonerId").extract[Long])
     ).toMap
 
-    (matchObject \ "participants").children.map(
-      p => {
+    (matchObject \ "participants").children.map( p => {
         val (stats, timeline) = (p \ "stats", p \ "timeline")
 
         MatchDetail(

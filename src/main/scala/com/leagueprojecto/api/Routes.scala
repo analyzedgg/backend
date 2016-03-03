@@ -11,7 +11,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.leagueprojecto.api.domain.{PlayerStats, MatchDetail, Summoner}
 import com.leagueprojecto.api.services.couchdb.DatabaseService
-import com.leagueprojecto.api.services.couchdb.DatabaseService.SaveMatches
+import com.leagueprojecto.api.services.couchdb.DatabaseService.{GetMatches, SaveMatches}
 import com.leagueprojecto.api.services.{MatchHistoryManager, SummonerManager}
 import com.leagueprojecto.api.services.SummonerManager.GetSummoner
 import com.leagueprojecto.api.services.riot.{MatchService, RiotService, SummonerService}
@@ -74,12 +74,8 @@ trait Routes extends JsonProtocols {
           get {
             complete {
               //testing:
-//              val matchHistoryManager = system.actorOf(MatchHistoryManager.props)
-//              (matchHistoryManager ? MatchHistoryManager.GetMatches(region, summonerId, queueParam, championParam)).mapTo[Seq[MatchDetail]]
-              val matchDetails = Seq(MatchDetail(0, "RANKED", 0, 0, 0, 0, "", "", true, PlayerStats(1,2,3,4)),
-                MatchDetail(1, "NORMAL", 1, 1, 1, 1, "", "", true, PlayerStats(1,2,3,4)))
-              system.actorOf(DatabaseService.props) ! SaveMatches("EUW", 123123, matchDetails)
-              "test"
+              val matchHistoryManager = system.actorOf(MatchHistoryManager.props)
+              (matchHistoryManager ? MatchHistoryManager.GetMatches(region, summonerId, queueParam, championParam)).mapTo[Seq[MatchDetail]]
             }
           } ~ optionsSupport
         }
