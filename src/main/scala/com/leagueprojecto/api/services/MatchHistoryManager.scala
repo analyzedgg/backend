@@ -86,7 +86,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
 
   when(PersistingToDb, stateTimeout = 10.seconds) {
     case Event(MatchesSaved, _) =>
-      log.info("Matches were saves correctly, stopping actor")
+      log.info("Matches were saved correctly, stopping actor")
       stop()
     case _ =>
       stop()

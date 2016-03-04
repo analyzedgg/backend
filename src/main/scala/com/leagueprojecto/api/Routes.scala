@@ -73,7 +73,6 @@ trait Routes extends JsonProtocols {
         pathEndOrSingleSlash {
           get {
             complete {
-              //testing:
               val matchHistoryManager = system.actorOf(MatchHistoryManager.props)
               (matchHistoryManager ? MatchHistoryManager.GetMatches(region, summonerId, queueParam, championParam)).mapTo[Seq[MatchDetail]]
             }
