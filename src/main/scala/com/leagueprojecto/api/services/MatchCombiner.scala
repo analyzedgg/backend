@@ -16,6 +16,7 @@ object MatchCombiner {
   case object GettingMatches extends State
 
   case class StateData(sender: ActorRef, matches: Seq[MatchDetail])
+  case class Result(matches: Seq[MatchDetail])
 
   def props(regionParam: String, summonerId: Long, matchIds: Seq[Long]) = Props(new MatchCombiner(regionParam, summonerId, matchIds))
 }
@@ -31,7 +32,7 @@ class MatchCombiner(regionParam: String, summonerId: Long, matchIds: Seq[Long]) 
 
   when(GettingMatches, stateTimeout = 5 seconds) {
     case Event(matchDetail: MatchDetail, state @ StateData(sender, matches)) if matches.size + 1 == matchIds.size =>
-      sender ! matches :+ matchDetail
+      sender ! Result(matches :+ matchDetail)
       stop()
 
     case Event(matchDetail: MatchDetail, state @ StateData(sender, matches)) =>
@@ -39,7 +40,7 @@ class MatchCombiner(regionParam: String, summonerId: Long, matchIds: Seq[Long]) 
 
     case Event(StateTimeout, StateData(sender, matches)) =>
       log.info(s"MatchCombiner timed out, returning ${matches.size} matches.")
-      sender ! matches
+      sender ! Result(matches)
       stop()
   }
 }

@@ -4,30 +4,24 @@ import akka.actor.{ActorLogging, FSM, ActorRef, Props}
 import com.leagueprojecto.api.domain.MatchDetail
 import com.leagueprojecto.api.services.MatchHistoryManager.{StateData, State}
 import com.leagueprojecto.api.services.couchdb.DatabaseService
-import com.leagueprojecto.api.services.couchdb.DatabaseService.{MatchesSaved, SaveMatches}
+import com.leagueprojecto.api.services.couchdb.DatabaseService.{MatchesResult, MatchesSaved, SaveMatches}
 import com.leagueprojecto.api.services.riot.RecentMatchesService
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 object MatchHistoryManager {
-
   sealed trait State
-
   case object Idle extends State
-
   case object RetrievingRecentMatchIdsFromRiot extends State
-
   case object RetrievingFromDb extends State
-
   case object RetrievingFromRiot extends State
-
   case object PersistingToDb extends State
 
   case class GetMatches(region: String, summonerId: Long, queueType: String, championList: String)
 
   case class RequestData(sender: ActorRef, getMatches: GetMatches)
-
   case class StateData(requestData: Option[RequestData], matches: Map[Long, Option[MatchDetail]])
+
+  case class Result(data: Seq[MatchDetail])
 
   def props = Props[MatchHistoryManager]
 }
@@ -46,11 +40,11 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
   }
 
   when(RetrievingRecentMatchIdsFromRiot) {
-    case Event(matchIds: Seq[Long], StateData(Some(RequestData(sender, _)), _)) if matchIds.isEmpty =>
+    case Event(RecentMatchesService.Result(matchIds), StateData(Some(RequestData(sender, _)), _)) if matchIds.isEmpty =>
       // In case there are no match ids, return an empty MatchHistory Seq back to the sender.
-      sender ! Seq.empty[MatchDetail]
+      sender ! Result(Seq.empty[MatchDetail])
       stop()
-    case Event(matchIds: Seq[Long], state) =>
+    case Event(RecentMatchesService.Result(matchIds), state) =>
       // create the empty matchesMap which are to be filled by either the Db or Riot
       val matchesMap = matchIds.map(m => m -> None).toMap
       goto(RetrievingFromDb) using state.copy(matches = matchesMap)
@@ -59,11 +53,11 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
   }
 
   when(RetrievingFromDb) {
-    case Event(matchDetails: Seq[MatchDetail], StateData(Some(RequestData(sender, msg)), matches)) =>
+    case Event(MatchesResult(matchDetails), StateData(Some(RequestData(sender, msg)), matches)) =>
       val mergedMatches = matches ++ matchDetails.map(m => m.matchId -> Some(m))
 
       if (!hasEmptyValues(mergedMatches)) {
-        sender ! getValues(mergedMatches)
+        sender ! Result(getValues(mergedMatches))
         stop()
       } else {
         goto(RetrievingFromRiot) using StateData(Some(RequestData(sender, msg)), mergedMatches)
@@ -71,13 +65,14 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
   }
 
   when(RetrievingFromRiot) {
-    case Event(matchDetails: Seq[MatchDetail], StateData(Some(RequestData(sender, msg @ GetMatches(region, summonerId, _, _))), matches)) =>
+    case Event(MatchCombiner.Result(matchDetails), StateData(Some(RequestData(sender, msg @ GetMatches(region, summonerId, _, _))), matches)) =>
 
       // Insert the new matchDetails into the database
       dbService ! SaveMatches(region, summonerId, matchDetails)
 
       val mergedMatches = matches ++ matchDetails.map(m => m.matchId -> Some(m))
-      sender ! mergedMatches
+      val mergedMatchesSeq = mergedMatches.values.map(_.get).toSeq
+      sender ! Result(mergedMatchesSeq)
 
       goto(PersistingToDb) using StateData(Some(RequestData(sender, msg)), mergedMatches)
 

@@ -12,20 +12,15 @@ object DatabaseService {
   def props = Props(new DatabaseService)
 
   case class GetSummoner(region: String, name: String)
-
   case class SaveSummoner(region: String, summoner: Summoner)
-
   case class GetMatches(region: String, summonerId: Long, matchIds: Seq[Long])
-
   case class SaveMatches(region: String, summonerId: Long, matches: Seq[MatchDetail])
 
-
   case object NoSummonerFound
-
   case object SummonerSaved
-
   case object MatchesSaved
-
+  case class SummonerResult(summoner: Summoner)
+  case class MatchesResult(matches: Seq[MatchDetail])
 }
 
 class DatabaseService extends Actor with ActorLogging {
@@ -50,7 +45,7 @@ class DatabaseService extends Actor with ActorLogging {
       summonerDb.docs.get[Summoner](id).attemptRun match {
         case \/-(summonerDoc) =>
           log.info(s"Yay got summoner from Db: $summonerDoc")
-          sender() ! summonerDoc.doc
+          sender() ! SummonerResult(summonerDoc.doc)
         case -\/(CouchException(e: Error)) if e.status == NotFound =>
           log.info(s"No summoner found ($id) from Db")
           sender() ! NoSummonerFound
@@ -65,7 +60,7 @@ class DatabaseService extends Actor with ActorLogging {
       matchesDb.docs.getMany.queryIncludeDocsAllowMissing[MatchDetail](decoratedIds).attemptRun match {
         case \/-(matchesDocs) =>
           log.info(s"Yay, got ${matchesDocs.getDocsData.size} matches from Db")
-          sender() ! matchesDocs.getDocsData
+          sender() ! MatchesResult(matchesDocs.getDocsData)
         case -\/(e) =>
           log.error(s"Error retrieving matches ($matchIds) from Db")
           e.printStackTrace()

@@ -20,6 +20,8 @@ object SummonerManager {
   case class GetSummoner(region: String, name: String)
   case class RequestData(sender: ActorRef, getSummoner: GetSummoner)
 
+  case class Result(summoner: Summoner)
+
   def props = Props[SummonerManager]
 }
 
@@ -36,7 +38,7 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
 
   when(RetrievingFromDb) {
     case Event(summoner: Summoner, (Some(RequestData(sender, _)), _)) =>
-      sender ! summoner
+      sender ! Result(summoner)
       stop()
     case Event(DatabaseService.NoSummonerFound, stateData) =>
       goto(RetrievingFromRiot) using stateData
@@ -44,7 +46,7 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
 
   when(RetrievingFromRiot) {
     case Event(summoner: Summoner, (Some(RequestData(sender, _)), _)) =>
-      sender ! summoner
+      sender ! Result(summoner)
       goto(PersistingToDb) using stateData.copy(_2 = Some(summoner))
     case Event(notFound: SummonerService.SummonerNotFound, (Some(RequestData(sender, _)), _)) =>
       sender ! Failure(notFound)

@@ -10,8 +10,11 @@ import com.leagueprojecto.api.domain.Match
 import com.leagueprojecto.api.services.riot.RecentMatchesService.GetRecentMatchIds
 import spray.json._
 
+import scala.collection.immutable
+
 object RecentMatchesService {
   case class GetRecentMatchIds(amount: Int)
+  case class Result(matchIds: Seq[Long])
 
   def props(region: String, summonerId: Long, queueType: String, championList: String) =
     Props(new RecentMatchesService(region, summonerId, queueType, championList))
@@ -28,13 +31,6 @@ with RiotService with ActorLogging with JsonProtocols {
 
       // riot service was giving 500 at the time for begin and end index 0 and 100 while it worked at first
       val queryParams = Map.empty[String, String]
-//      var queryParams = Map(
-//        "beginIndex" -> "0",
-//        "endIndex" -> amount.toString
-//      )
-//
-//      if (queueType != "")    queryParams += "rankedQueues" -> queueType
-//      if (championList != "") queryParams += "championIds" -> championList
 
       val matchlistEndpoint: Uri = endpoint(queryParams)
 
@@ -49,7 +45,8 @@ with RiotService with ActorLogging with JsonProtocols {
         case result: String =>
           val matchlist = transform(result.parseJson.asJsObject)
           println(s"${matchlist.size} matches found!")
-          origSender ! matchlist.map(_.matchId).toSeq.take(5)
+          val matchIds = matchlist.map(_.matchId).take(5).toSeq
+          origSender ! Result(matchIds)
       }
   }
 
