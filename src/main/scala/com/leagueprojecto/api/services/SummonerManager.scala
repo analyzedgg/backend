@@ -5,7 +5,7 @@ import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import com.leagueprojecto.api.domain.Summoner
 import com.leagueprojecto.api.services.SummonerManager._
 import com.leagueprojecto.api.services.couchdb.DatabaseService
-import com.leagueprojecto.api.services.couchdb.DatabaseService.{NoSummonerFound, SummonerSaved}
+import com.leagueprojecto.api.services.couchdb.DatabaseService.{SummonerResult, NoSummonerFound, SummonerSaved}
 import com.leagueprojecto.api.services.riot.SummonerService
 import com.leagueprojecto.api.services.riot.SummonerService.GetSummonerByName
 
@@ -37,7 +37,7 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
   }
 
   when(RetrievingFromDb) {
-    case Event(summoner: Summoner, (Some(RequestData(sender, _)), _)) =>
+    case Event(DatabaseService.SummonerResult(summoner), (Some(RequestData(sender, _)), _)) =>
       sender ! Result(summoner)
       stop()
     case Event(DatabaseService.NoSummonerFound, stateData) =>
@@ -45,7 +45,7 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
   }
 
   when(RetrievingFromRiot) {
-    case Event(summoner: Summoner, (Some(RequestData(sender, _)), _)) =>
+    case Event(SummonerService.Result(summoner), (Some(RequestData(sender, _)), _)) =>
       sender ! Result(summoner)
       goto(PersistingToDb) using stateData.copy(_2 = Some(summoner))
     case Event(notFound: SummonerService.SummonerNotFound, (Some(RequestData(sender, _)), _)) =>

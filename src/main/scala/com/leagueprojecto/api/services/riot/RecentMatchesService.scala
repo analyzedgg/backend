@@ -7,10 +7,7 @@ import akka.http.scaladsl.model.{HttpResponse, Uri}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.leagueprojecto.api.JsonProtocols
 import com.leagueprojecto.api.domain.Match
-import com.leagueprojecto.api.services.riot.RecentMatchesService.GetRecentMatchIds
 import spray.json._
-
-import scala.collection.immutable
 
 object RecentMatchesService {
   case class GetRecentMatchIds(amount: Int)
@@ -22,6 +19,7 @@ object RecentMatchesService {
 
 class RecentMatchesService(override val region: String, summonerId: Long, queueType: String, championList: String) extends Actor
 with RiotService with ActorLogging with JsonProtocols {
+  import RecentMatchesService._
 
   override val service = matchlistBySummonerId + summonerId
 

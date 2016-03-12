@@ -17,7 +17,7 @@ import com.leagueprojecto.api.services.SummonerManager.GetSummoner
 import com.leagueprojecto.api.services.riot.{MatchService, RiotService, SummonerService}
 import com.typesafe.config.Config
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{Future, ExecutionContextExecutor}
 import scala.concurrent.duration._
 
 trait Routes extends JsonProtocols {
@@ -54,7 +54,8 @@ trait Routes extends JsonProtocols {
         get {
           complete {
             val summonerManager = system.actorOf(SummonerManager.props)
-            (summonerManager ? GetSummoner(region, name)).mapTo[Summoner]
+            val future = summonerManager ? GetSummoner(region, name)
+            future.mapTo[SummonerManager.Result].map(_.summoner)
           }
         } ~ optionsSupport
       }
@@ -63,7 +64,7 @@ trait Routes extends JsonProtocols {
 
   def matchhistoryRoute(implicit region: String) = {
     pathPrefix("matchhistory" / LongNumber) { summonerId =>
-      parameters("queue" ? "", "champions" ? "") { (queueParam, championParam) =>
+      parameters("queue" ? "", "champions" ? "") { (queueParam: String, championParam: String) =>
         var queueType = queueParam
         if (!queueParam.matches(queueMatcher)) queueType = ""
 
@@ -74,7 +75,8 @@ trait Routes extends JsonProtocols {
           get {
             complete {
               val matchHistoryManager = system.actorOf(MatchHistoryManager.props)
-              (matchHistoryManager ? MatchHistoryManager.GetMatches(region, summonerId, queueParam, championParam)).mapTo[Seq[MatchDetail]]
+              val future = matchHistoryManager ? MatchHistoryManager.GetMatches(region, summonerId, queueParam, championParam)
+              future.mapTo[MatchHistoryManager.Result].map(_.data)
             }
           } ~ optionsSupport
         }
