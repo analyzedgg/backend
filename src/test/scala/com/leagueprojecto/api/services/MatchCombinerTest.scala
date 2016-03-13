@@ -74,7 +74,8 @@ class MatchCombinerTest extends FlatSpec with Matchers with GivenWhenThen {
     When("a request to the MatchCombiner is done from the sender probe")
     senderProbe.send(actorRef, MatchCombiner.GetMatches(testRegion, testSummonerId, alteredMatchIds))
 
-    And("a timeout is created")
+    And("a timeout is created after some time")
+    Thread.sleep(20)
     senderProbe.send(actorRef, StateTimeout)
 
     Then("a list of matches should be returned to the sender probe")
