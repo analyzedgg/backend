@@ -14,8 +14,8 @@ import org.json4s._
 import org.json4s.native.Serialization
 
 object MatchService {
-
   case class GetMatch(regionParam: String, summonerId: Long, matchId: Long)
+  case class Result(matchDetail: MatchDetail)
 
   def props = Props(new MatchService)
 }
@@ -41,7 +41,7 @@ class MatchService extends Actor with ActorLogging with RiotService {
           val matchDetails = transform(result)
           log.debug(s"got match back: $matchDetails")
           val singleMatch: MatchDetail = matchDetails.filter(_.summonerId == summonerId).head
-          origSender ! singleMatch
+          origSender ! Result(singleMatch)
       }
 
     case HttpResponse(NotFound, _, _, _) =>

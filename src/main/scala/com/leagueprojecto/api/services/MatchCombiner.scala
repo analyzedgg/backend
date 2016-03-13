@@ -32,27 +32,27 @@ class MatchCombiner extends FSM[State, StateData] with ActorLogging {
   }
 
   when(GettingMatches, stateTimeout = 5 seconds) {
-    case Event(matchDetail: MatchDetail, state @ StateData(sender, matches)) =>
+    case Event(MatchService.Result(matchDetail), state @ StateData(sender, matches)) =>
       val newMatches = matches + (matchDetail.matchId -> Some(matchDetail))
 
       if (hasEmptyValues(newMatches)) {
         goto(GettingMatches) using state.copy(matches = newMatches)
       } else {
-        sender ! Result(getValues(newMatches))
+        sender ! Result(getValuesInOrder(newMatches))
         stop()
       }
 
     case Event(StateTimeout, StateData(sender, matches)) =>
       log.info(s"MatchCombiner timed out, returning ${matches.size} matches.")
-      sender ! Result(getValues(matches))
+      sender ! Result(getValuesInOrder(matches))
       stop()
   }
 
   private def hasEmptyValues(mergedMatches: Map[Long, Option[MatchDetail]]): Boolean =
     mergedMatches.values.exists(_.isEmpty)
 
-  private def getValues(mergedMatches: Map[Long, Option[MatchDetail]]): Seq[MatchDetail] =
-    mergedMatches.values.filter(_.isDefined).map(_.get).toSeq
+  private def getValuesInOrder(mergedMatches: Map[Long, Option[MatchDetail]]): Seq[MatchDetail] =
+    mergedMatches.values.filter(_.isDefined).map(_.get).toSeq.sortBy(_.matchId)
 
   protected def createMatchServiceActor: ActorRef =
     context.actorOf(MatchService.props)
