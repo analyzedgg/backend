@@ -49,7 +49,7 @@ class MatchCombiner extends FSM[State, StateData] with ActorLogging {
   }
 
   private def hasEmptyValues(mergedMatches: Map[Long, Option[MatchDetail]]): Boolean =
-    mergedMatches.exists(_._2.isEmpty)
+    mergedMatches.values.exists(_.isEmpty)
 
   private def getValues(mergedMatches: Map[Long, Option[MatchDetail]]): Seq[MatchDetail] =
     mergedMatches.values.filter(_.isDefined).map(_.get).toSeq

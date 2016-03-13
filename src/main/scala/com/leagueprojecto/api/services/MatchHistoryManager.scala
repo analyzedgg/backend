@@ -122,12 +122,9 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
       stop()
   }
 
+  private def hasEmptyValues(mergedMatches: Map[Long, Option[MatchDetail]]): Boolean =
+    mergedMatches.values.exists(_.isEmpty)
 
-  private def hasEmptyValues(mergedMatches: Map[Long, Option[MatchDetail]]): Boolean = {
-    mergedMatches.exists(_._2.isEmpty)
-  }
-
-  private def getValues(mergedMatches: Map[Long, Option[MatchDetail]]): Seq[MatchDetail] = {
+  private def getValues(mergedMatches: Map[Long, Option[MatchDetail]]): Seq[MatchDetail] =
     mergedMatches.values.map(_.get).toSeq
-  }
 }
