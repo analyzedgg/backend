@@ -10,23 +10,21 @@ import com.leagueprojecto.api.domain.Summoner
 import spray.json._
 
 object SummonerService {
-  case object GetSummonerByName
+  case class GetSummonerByName(region: String, name: String)
   case class SummonerNotFound(message: String) extends Exception
   case class Result(summoner: Summoner)
 
-  def props(region: String, name: String): Props = Props(new SummonerService(region, name))
+  def props = Props(new SummonerService)
 }
 
-class SummonerService(override val region: String, name: String) extends Actor with ActorLogging with RiotService with JsonProtocols {
+class SummonerService extends Actor with ActorLogging with RiotService with JsonProtocols {
   import SummonerService._
 
-  override val service = summonerByName + name
-
   override def receive: Receive = {
-    case GetSummonerByName =>
+    case GetSummonerByName(regionParam: String, name: String) =>
       val origSender: ActorRef = sender()
 
-      val summonerEndpoint: Uri = endpoint()
+      val summonerEndpoint: Uri = endpoint(regionParam, summonerByName + name)
 
       val future = riotRequest(RequestBuilding.Get(summonerEndpoint))
       future onSuccess successHandler(origSender).orElse(defaultSuccessHandler(origSender))
@@ -43,7 +41,7 @@ class SummonerService(override val region: String, name: String) extends Actor w
       }
 
     case HttpResponse(NotFound, _, _, _) =>
-      val message = s"No summoner found by name '$name' for region '$region'"
+      val message = s"No summoner found by service '$service' for region '$region'"
       log.warning(message)
       origSender ! SummonerNotFound(message)
   }

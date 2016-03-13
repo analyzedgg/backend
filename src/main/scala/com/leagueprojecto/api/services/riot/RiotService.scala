@@ -29,8 +29,8 @@ trait RiotService {
   private val port: Int = config.getInt("riot.api.port")
   private val api_key: String = config.getString("riot.api.key")
 
-  val region: String
-  val service: String
+  protected var region: String = ""
+  protected var service: String = ""
 
   lazy val riotConnectionFlow: Flow[HttpRequest, HttpResponse, Any] = {
     val host = hostname.replace(":region", region)
@@ -42,17 +42,20 @@ trait RiotService {
     }
   }
 
-  def endpoint(queryParams: Map[String, String] = Map.empty): Uri = {
+  protected def endpoint(regionParam: String, serviceParam: String, queryParams: Map[String, String] = Map.empty): Uri = {
+    region = regionParam
+    service = serviceParam
+
     val queryString = (queryParams + ("api_key" -> api_key)).collect { case x => x._1 + "=" + x._2 }.mkString("&")
     val URL = s"/api/lol/$region/$service?$queryString"
     log.debug(s"endpoint: $URL")
     URL
   }
 
-  def riotRequest(httpRequest: HttpRequest): Future[HttpResponse] =
+  protected def riotRequest(httpRequest: HttpRequest): Future[HttpResponse] =
     Source.single(httpRequest).via(riotConnectionFlow).runWith(Sink.head)
 
-  def defaultSuccessHandler(origSender: ActorRef): PartialFunction[HttpResponse, Unit] = {
+  protected def defaultSuccessHandler(origSender: ActorRef): PartialFunction[HttpResponse, Unit] = {
     case HttpResponse(TooManyRequests, _, _, _) =>
       val message = "Too many requests"
       log.warning(message)

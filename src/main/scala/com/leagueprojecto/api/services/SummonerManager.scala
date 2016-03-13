@@ -73,8 +73,8 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
     case RetrievingFromDb -> RetrievingFromRiot =>
       nextStateData match {
         case (Some(RequestData(_, GetSummoner(region, name))), None) =>
-          val summonerRef = context.actorOf(SummonerService.props(region, name))
-          summonerRef ! GetSummonerByName
+          val summonerRef = context.actorOf(SummonerService.props)
+          summonerRef ! GetSummonerByName(region, name)
 
         case failData =>
           log.error(s"Something went wrong when going from RetrievingFromDb -> RetrievingFromRiot, got data: $failData")

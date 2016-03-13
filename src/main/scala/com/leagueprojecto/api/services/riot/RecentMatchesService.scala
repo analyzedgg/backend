@@ -10,27 +10,20 @@ import com.leagueprojecto.api.domain.Match
 import spray.json._
 
 object RecentMatchesService {
-  case class GetRecentMatchIds(amount: Int)
+  case class GetRecentMatchIds(region: String, summonerId: Long, queueType: String, championList: String, amount: Int)
   case class Result(matchIds: Seq[Long])
 
-  def props(region: String, summonerId: Long, queueType: String, championList: String) =
-    Props(new RecentMatchesService(region, summonerId, queueType, championList))
+  def props = Props(new RecentMatchesService)
 }
 
-class RecentMatchesService(override val region: String, summonerId: Long, queueType: String, championList: String) extends Actor
-with RiotService with ActorLogging with JsonProtocols {
+class RecentMatchesService extends Actor with RiotService with ActorLogging with JsonProtocols {
   import RecentMatchesService._
 
-  override val service = matchlistBySummonerId + summonerId
-
   override def receive: Receive = {
-    case GetRecentMatchIds(amount) =>
+    case GetRecentMatchIds(regionParam, summonerId, queueType, championList, amount) =>
       implicit val origSender = sender()
 
-      // riot service was giving 500 at the time for begin and end index 0 and 100 while it worked at first
-      val queryParams = Map.empty[String, String]
-
-      val matchlistEndpoint: Uri = endpoint(queryParams)
+      val matchlistEndpoint: Uri = endpoint(regionParam, matchlistBySummonerId + summonerId)
 
       val future = riotRequest(RequestBuilding.Get(matchlistEndpoint))
       future onSuccess successHandler(origSender, amount).orElse(defaultSuccessHandler(origSender))

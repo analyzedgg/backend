@@ -15,31 +15,26 @@ import org.json4s.native.Serialization
 
 object MatchService {
 
-  case object GetMatch
+  case class GetMatch(regionParam: String, summonerId: Long, matchId: Long)
 
-  def props(regionParam: String, summonerId: Long, matchId: Long) = Props(new MatchService(regionParam, summonerId, matchId))
+  def props = Props(new MatchService)
 }
 
-class MatchService(regionParam: String, summonerId: Long, matchId: Long)
-  extends Actor with ActorLogging with RiotService {
-
+class MatchService extends Actor with ActorLogging with RiotService {
   import MatchService._
 
-  override val region = regionParam
-  override val service = matchById + matchId
-
   override def receive: Receive = {
-    case GetMatch =>
+    case GetMatch(regionParam, summonerId, matchId) =>
       implicit val origSender: ActorRef = sender()
 
-      val matchEndpoint: Uri = endpoint()
+      val matchEndpoint: Uri = endpoint(regionParam, matchById + matchId)
 
       val future = riotRequest(RequestBuilding.Get(matchEndpoint))
-      future onSuccess successHandler(origSender).orElse(defaultSuccessHandler(origSender))
+      future onSuccess successHandler(origSender, summonerId).orElse(defaultSuccessHandler(origSender))
       future onFailure failureHandler
   }
 
-  def successHandler(origSender: ActorRef): PartialFunction[HttpResponse, Unit] = {
+  def successHandler(origSender: ActorRef, summonerId: Long): PartialFunction[HttpResponse, Unit] = {
     case HttpResponse(OK, _, entity, _) =>
       Unmarshal(entity).to[String].onSuccess {
         case result: String =>
@@ -50,7 +45,7 @@ class MatchService(regionParam: String, summonerId: Long, matchId: Long)
       }
 
     case HttpResponse(NotFound, _, _, _) =>
-      val message = s"No match found by id '$matchId' for region '$region'"
+      val message = s"No match found by service '$service' for region '$region'"
       log.warning(message)
       origSender ! Failure(new SummonerNotFound(message))
   }
