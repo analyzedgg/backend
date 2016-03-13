@@ -1,6 +1,6 @@
 package com.leagueprojecto.api
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorRef, ActorSystem}
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes._
@@ -9,15 +9,12 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.pattern.ask
 import akka.util.Timeout
-import com.leagueprojecto.api.domain.{PlayerStats, MatchDetail, Summoner}
-import com.leagueprojecto.api.services.couchdb.DatabaseService
-import com.leagueprojecto.api.services.couchdb.DatabaseService.{GetMatches, SaveMatches}
 import com.leagueprojecto.api.services.{MatchHistoryManager, SummonerManager}
 import com.leagueprojecto.api.services.SummonerManager.GetSummoner
-import com.leagueprojecto.api.services.riot.{MatchService, RiotService, SummonerService}
+import com.leagueprojecto.api.services.riot.{SummonerService, RiotService}
 import com.typesafe.config.Config
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import scala.concurrent.{Future, ExecutionContextExecutor}
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 
 trait Routes extends JsonProtocols {
@@ -53,7 +50,7 @@ trait Routes extends JsonProtocols {
       pathEndOrSingleSlash {
         get {
           complete {
-            val summonerManager = system.actorOf(SummonerManager.props)
+            val summonerManager = createSummonerActor
             val future = summonerManager ? GetSummoner(region, name)
             future.mapTo[SummonerManager.Result].map(_.summoner)
           }
@@ -74,7 +71,7 @@ trait Routes extends JsonProtocols {
         pathEndOrSingleSlash {
           get {
             complete {
-              val matchHistoryManager = system.actorOf(MatchHistoryManager.props)
+              val matchHistoryManager = createMatchHistoryActor
               val future = matchHistoryManager ? MatchHistoryManager.GetMatches(region, summonerId, queueParam, championParam)
               future.mapTo[MatchHistoryManager.Result].map(_.data)
             }
@@ -95,4 +92,10 @@ trait Routes extends JsonProtocols {
       }
     }
   }
+
+  def createSummonerActor: ActorRef =
+    system.actorOf(SummonerManager.props)
+
+  def createMatchHistoryActor: ActorRef =
+    system.actorOf(MatchHistoryManager.props)
 }
