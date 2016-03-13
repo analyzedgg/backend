@@ -111,8 +111,8 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
         case StateData(Some(RequestData(_, GetMatches(region, summonerId, _, _))), matches) =>
           val matchesToRetrieve = matches.filter(_._2.isEmpty).keys
           log.info(s"going to get matches: [$matchesToRetrieve] from riot")
-          val matchesActor = context.actorOf(MatchCombiner.props(region, summonerId, matchesToRetrieve.toSeq))
-          matchesActor ! MatchCombiner.GetMatches
+          val matchesActor = context.actorOf(MatchCombiner.props)
+          matchesActor ! MatchCombiner.GetMatches(region, summonerId, matchesToRetrieve.toSeq)
       }
   }
 
