@@ -5,7 +5,7 @@ import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import com.leagueprojecto.api.domain.Summoner
 import com.leagueprojecto.api.services.SummonerManager._
 import com.leagueprojecto.api.services.couchdb.DatabaseService
-import com.leagueprojecto.api.services.couchdb.DatabaseService.{SummonerResult, NoSummonerFound, SummonerSaved}
+import com.leagueprojecto.api.services.couchdb.DatabaseService.SummonerSaved
 import com.leagueprojecto.api.services.riot.SummonerService
 import com.leagueprojecto.api.services.riot.SummonerService.GetSummonerByName
 
@@ -27,7 +27,7 @@ object SummonerManager {
 
 class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])] with ActorLogging {
 
-  val dbService = context.actorOf(DatabaseService.props)
+  val dbService = createDatabaseServiceActor
 
   startWith(Idle, (None, None))
 
@@ -73,7 +73,7 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
     case RetrievingFromDb -> RetrievingFromRiot =>
       nextStateData match {
         case (Some(RequestData(_, GetSummoner(region, name))), None) =>
-          val summonerRef = context.actorOf(SummonerService.props)
+          val summonerRef = createSummonerServiceActor
           summonerRef ! GetSummonerByName(region, name)
 
         case failData =>
@@ -95,5 +95,12 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
       log.error(s"Got unhandled message ($msg) in $stateName")
       stop()
   }
+
+  protected def createDatabaseServiceActor: ActorRef =
+    context.actorOf(DatabaseService.props)
+
+  protected def createSummonerServiceActor: ActorRef =
+    context.actorOf(SummonerService.props)
+
 }
 
