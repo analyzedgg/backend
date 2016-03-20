@@ -52,7 +52,7 @@ class MatchCombinerTest extends FlatSpec with Matchers with GivenWhenThen {
     val senderProbe = new TestProbe(system)
 
     And("an expected list of MatchDetails")
-    val expectedResult = testMatchIds.map(id => testMatchDetail.copy(matchId = id)).seq
+    val expectedResult = testMatchIds.map(id => testMatchDetail.copy(matchId = id))
 
     When("a request to the MatchCombiner is done from the sender probe")
     senderProbe.send(actorRef, MatchCombiner.GetMatches(testRegion, testSummonerId, testMatchIds))
@@ -66,7 +66,7 @@ class MatchCombinerTest extends FlatSpec with Matchers with GivenWhenThen {
     val senderProbe = new TestProbe(system)
 
     And("an expected list of MatchDetails")
-    val expectedResult = testMatchIds.map(id => testMatchDetail.copy(matchId = id)).seq
+    val expectedResult = testMatchIds.map(id => testMatchDetail.copy(matchId = id))
 
     And("the standard list with a false one added")
     val alteredMatchIds = testMatchIds :+ 10L
