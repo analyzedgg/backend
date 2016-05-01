@@ -27,7 +27,7 @@ trait RiotService {
 
   private val hostname: String = config.getString("riot.api.hostname")
   private val port: Int = config.getInt("riot.api.port")
-  private val api_key: String = config.getString("riot.api.key")
+  private val api_key: String = config.getString("riot.api.key").trim
 
   protected var region: String = ""
   protected var service: String = ""
