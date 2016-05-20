@@ -19,7 +19,8 @@ class MatchHistoryRoute extends RoutesTest {
 
   val validPlayerStats = PlayerStats(10, 5, 3, 2)
   val validHistory =
-    MatchDetail(12312312L, "RANKED_SOLO_5x5", 1600, 1432328493438L, validSummonerId, 100, "DUO_SUPPORT", "BOTTOM", winner = true, validPlayerStats)
+    MatchDetail(12312312L, "RANKED_SOLO_5x5", 1600, 1432328493438L, validSummonerId, 100, "DUO_SUPPORT", "BOTTOM", winner = true,
+      validPlayerStats, null,null)
   val validHistoryList = List(validHistory)
 
   override def setMatchHistoryAutoPilot(probe: TestProbe) = {
