@@ -6,7 +6,7 @@ import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.{HttpResponse, Uri}
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import com.leagueprojecto.api.domain.{MatchDetail, Player, PlayerStats, Team}
+import com.leagueprojecto.api.domain._
 import com.leagueprojecto.api.services.riot.SummonerService.SummonerNotFound
 import org.json4s.native.JsonMethods._
 import org.json4s._
@@ -107,8 +107,7 @@ class MatchService extends Actor with ActorLogging with RiotService {
           (stats \ "deaths").extract[Int],
           (stats \ "assists").extract[Int]
         ),
-        Team(blueList),
-        Team(redList)
+        Teams(Team(blueList), Team(redList))
       )
     }
     )

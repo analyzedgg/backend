@@ -11,6 +11,5 @@ case class MatchDetail(
                         lane: String, // participants \ timeline
                         winner: Boolean, // participants \ stats
                         stats: PlayerStats,
-                        red: Team,
-                        blue: Team
+                        teams: Teams
                       )

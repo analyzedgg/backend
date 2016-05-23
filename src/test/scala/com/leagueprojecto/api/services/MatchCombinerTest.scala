@@ -1,11 +1,11 @@
 package com.leagueprojecto.api.services
 
 import akka.actor.FSM.StateTimeout
-import akka.actor.{Props, ActorRef, ActorSystem}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActor, TestProbe}
-import com.leagueprojecto.api.domain.{PlayerStats, MatchDetail}
+import com.leagueprojecto.api.domain._
 import com.leagueprojecto.api.services.riot.MatchService
-import org.scalatest.{GivenWhenThen, Matchers, FlatSpec}
+import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 
 class MatchCombinerTest extends FlatSpec with Matchers with GivenWhenThen {
   val system = ActorSystem.create()
@@ -14,8 +14,11 @@ class MatchCombinerTest extends FlatSpec with Matchers with GivenWhenThen {
   val testMatchIds: Seq[Long] = List(1, 2, 3, 4, 5)
   val testSummonerId = 123123123
   val testRegion = "EUW"
+  val validTeamRed = Team(List(Player(testSummonerId, "Minikoen")))
+  val validTeamBlue = Team(List(Player(testSummonerId, "Waggles")))
+  val validTeams = Teams(validTeamRed, validTeamBlue)
   val testMatchDetail = MatchDetail(0, "SOLOQ", 1400, 123123123L, 234234234L, 100, "DUO_CARRY", "BOT", winner = true, PlayerStats
-  (100, 1, 2, 3),null,null)
+  (100, 1, 2, 3), validTeams)
 
   class TestMatchCombiner extends MatchCombiner {
     override protected def createMatchServiceActor: ActorRef = riotProbe.ref
