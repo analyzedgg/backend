@@ -76,17 +76,12 @@ class MatchService extends Actor with ActorLogging with RiotService {
       ((pId \ "participantId").extract[Int], (pId \ "player" \ "summonerId").extract[Long])
     ).toMap
 
-    var players = new ListBuffer[Player]()
-
-    (matchObject \ "participantIdentities").children.foreach(pId =>
-      players += Player((pId \ "player" \ "summonerId").extract[Long], (pId \ "player" \ "summonerName").extract[String])
+    val players = (matchObject \ "participantIdentities").children.map(pId =>
+      Player((pId \ "player" \ "summonerId").extract[Long], (pId \ "player" \ "summonerName").extract[String])
     )
 
     val blue = players.take(5)
     val red = players.takeRight(5)
-
-    val blueList = blue.toList
-    val redList = red.toList
 
     (matchObject \ "participants").children.map(p => {
       val (stats, timeline) = (p \ "stats", p \ "timeline")
@@ -107,7 +102,7 @@ class MatchService extends Actor with ActorLogging with RiotService {
           (stats \ "deaths").extract[Int],
           (stats \ "assists").extract[Int]
         ),
-        Teams(Team(blueList), Team(redList))
+        Teams(Team(blue), Team(red))
       )
     }
     )
