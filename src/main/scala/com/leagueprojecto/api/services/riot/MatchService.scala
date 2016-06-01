@@ -76,12 +76,27 @@ class MatchService extends Actor with ActorLogging with RiotService {
       ((pId \ "participantId").extract[Int], (pId \ "player" \ "summonerId").extract[Long])
     ).toMap
 
-    val players = (matchObject \ "participantIdentities").children.map(pId =>
-      Player((pId \ "player" \ "summonerId").extract[Long], (pId \ "player" \ "summonerName").extract[String])
-    )
+    val blue = (matchObject \ "participantIdentities").children.flatMap(pId =>
+      (matchObject \ "participants").children.map(p =>
+        if ((p \ "participantId").extract[Int] == (pId \ "participantId").extract[Int]
+          && (p \ "teamId").extract[Int] == 100) {
+          Some(Player((pId \ "player" \ "summonerId").extract[Long], (pId \ "player" \ "summonerName").extract[String]))
+        } else {
+          None
+        }
+      )
+    ).flatten
 
-    val blue = players.take(5)
-    val red = players.takeRight(5)
+    val red = (matchObject \ "participantIdentities").children.flatMap(pId =>
+      (matchObject \ "participants").children.map(p =>
+        if ((p \ "participantId").extract[Int] == (pId \ "participantId").extract[Int]
+          && (p \ "teamId").extract[Int] == 200) {
+          Some(Player((pId \ "player" \ "summonerId").extract[Long], (pId \ "player" \ "summonerName").extract[String]))
+        } else {
+          None
+        }
+      )
+    ).flatten
 
     (matchObject \ "participants").children.map(p => {
       val (stats, timeline) = (p \ "stats", p \ "timeline")
