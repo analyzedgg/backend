@@ -12,8 +12,6 @@ import org.json4s.native.JsonMethods._
 import org.json4s._
 import org.json4s.native.Serialization
 
-import scala.collection.mutable.ListBuffer
-
 object MatchService {
 
   case class GetMatch(regionParam: String, summonerId: Long, matchId: Long)
@@ -70,33 +68,14 @@ class MatchService extends Actor with ActorLogging with RiotService {
       (matchObject \ "queueType").extract[String],
       (matchObject \ "matchDuration").extract[Int],
       (matchObject \ "matchCreation").extract[Long]
-      )
+    )
 
     val participantIds = (matchObject \ "participantIdentities").children.map(pId =>
       ((pId \ "participantId").extract[Int], (pId \ "player" \ "summonerId").extract[Long])
     ).toMap
 
-    val blue = (matchObject \ "participantIdentities").children.flatMap(pId =>
-      (matchObject \ "participants").children.map(p =>
-        if ((p \ "participantId").extract[Int] == (pId \ "participantId").extract[Int]
-          && (p \ "teamId").extract[Int] == 100) {
-          Some(Player((pId \ "player" \ "summonerId").extract[Long], (pId \ "player" \ "summonerName").extract[String]))
-        } else {
-          None
-        }
-      )
-    ).flatten
-
-    val red = (matchObject \ "participantIdentities").children.flatMap(pId =>
-      (matchObject \ "participants").children.map(p =>
-        if ((p \ "participantId").extract[Int] == (pId \ "participantId").extract[Int]
-          && (p \ "teamId").extract[Int] == 200) {
-          Some(Player((pId \ "player" \ "summonerId").extract[Long], (pId \ "player" \ "summonerName").extract[String]))
-        } else {
-          None
-        }
-      )
-    ).flatten
+    val blue: List[Player] = getPlayersFromTeam(matchObject, 100)
+    val red: List[Player] = getPlayersFromTeam(matchObject, 200)
 
     (matchObject \ "participants").children.map(p => {
       val (stats, timeline) = (p \ "stats", p \ "timeline")
@@ -121,6 +100,19 @@ class MatchService extends Actor with ActorLogging with RiotService {
       )
     }
     )
+  }
+
+  private[this] def getPlayersFromTeam(matchObject: JValue, teamId: Int)(implicit formats: Formats): List[Player] = {
+    (matchObject \ "participantIdentities").children.flatMap(pId =>
+      (matchObject \ "participants").children.map(p =>
+        if ((p \ "participantId").extract[Int] == (pId \ "participantId").extract[Int]
+          && (p \ "teamId").extract[Int] == teamId) {
+          Some(Player((pId \ "player" \ "summonerId").extract[Long], (pId \ "player" \ "summonerName").extract[String]))
+        } else {
+          None
+        }
+      )
+    ).flatten
   }
 }
 
