@@ -68,7 +68,7 @@ class MatchService extends Actor with ActorLogging with RiotService {
       (matchObject \ "queueType").extract[String],
       (matchObject \ "matchDuration").extract[Int],
       (matchObject \ "matchCreation").extract[Long]
-    )
+      )
 
     val participantIds = (matchObject \ "participantIdentities").children.map(pId =>
       ((pId \ "participantId").extract[Int], (pId \ "player" \ "summonerId").extract[Long])
@@ -98,21 +98,28 @@ class MatchService extends Actor with ActorLogging with RiotService {
         ),
         Teams(Team(blue), Team(red))
       )
-    }
-    )
+    })
   }
 
   private[this] def getPlayersFromTeam(matchObject: JValue, teamId: Int)(implicit formats: Formats): List[Player] = {
-    (matchObject \ "participantIdentities").children.flatMap(pId =>
-      (matchObject \ "participants").children.map(p =>
-        if ((p \ "participantId").extract[Int] == (pId \ "participantId").extract[Int]
-          && (p \ "teamId").extract[Int] == teamId) {
-          Some(Player((pId \ "player" \ "summonerId").extract[Long], (pId \ "player" \ "summonerName").extract[String]))
-        } else {
-          None
-        }
-      )
-    ).flatten
+    // Create a list of all participants in `teamId`
+    val participantIdsInTeam: List[Long] = (matchObject \ "participants").children.map(p =>
+      (p \ "participantId").extract[Long] -> (p \ "teamId").extract[Int]
+    ).filter(_._2 == teamId).map(_._1)
+
+    // Get the id and name of all above summoners
+    (matchObject \ "participantIdentities").children.flatMap(pId => {
+      val participantId = (pId \ "participantId").extract[Long]
+
+      if (participantIdsInTeam.contains(participantId)) {
+        Some(Player(
+          (pId \ "player" \ "summonerId").extract[Long],
+          (pId \ "player" \ "summonerName").extract[String])
+        )
+      } else {
+        None
+      }
+    })
   }
 }
 
