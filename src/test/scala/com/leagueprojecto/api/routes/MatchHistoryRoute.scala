@@ -5,8 +5,8 @@ import akka.actor.Status.Failure
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model.StatusCodes._
-import akka.testkit.{TestProbe, TestActor}
-import com.leagueprojecto.api.domain.{PlayerStats, MatchDetail}
+import akka.testkit.{TestActor, TestProbe}
+import com.leagueprojecto.api.domain._
 import com.leagueprojecto.api.services.MatchHistoryManager
 import com.leagueprojecto.api.services.MatchHistoryManager.GetMatches
 import com.leagueprojecto.api.services.riot.SummonerService.SummonerNotFound
@@ -18,8 +18,12 @@ class MatchHistoryRoute extends RoutesTest {
   val invalidSummonerId = 987654321
 
   val validPlayerStats = PlayerStats(10, 5, 3, 2)
+  val validTeamRed = Team(List(Player(validSummonerId, "Minikoen")))
+  val validTeamBlue = Team(List(Player(validSummonerId, "Waggles")))
+  val validTeams = Teams(validTeamRed, validTeamBlue)
   val validHistory =
-    MatchDetail(12312312L, "RANKED_SOLO_5x5", 1600, 1432328493438L, validSummonerId, 100, "DUO_SUPPORT", "BOTTOM", winner = true, validPlayerStats)
+    MatchDetail(12312312L, "RANKED_SOLO_5x5", 1600, 1432328493438L, validSummonerId, 100, "DUO_SUPPORT", "BOTTOM", winner = true,
+      validPlayerStats, validTeams)
   val validHistoryList = List(validHistory)
 
   override def setMatchHistoryAutoPilot(probe: TestProbe) = {
