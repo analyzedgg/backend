@@ -63,11 +63,12 @@ class MatchService extends Actor with ActorLogging with RiotService {
 
     val matchObject = parse(riotResult)
 
-    val (matchId, queueType, matchDuration, matchCreation) = (
+    val (matchId, queueType, matchDuration, matchCreation, matchVersion) = (
       (matchObject \ "matchId").extract[Long],
       (matchObject \ "queueType").extract[String],
       (matchObject \ "matchDuration").extract[Int],
-      (matchObject \ "matchCreation").extract[Long]
+      (matchObject \ "matchCreation").extract[Long],
+      (matchObject \ "matchVersion").extract[String]
       )
 
     val participantIds = (matchObject \ "participantIdentities").children.map(pId =>
@@ -90,6 +91,7 @@ class MatchService extends Actor with ActorLogging with RiotService {
         (timeline \ "role").extract[String],
         (timeline \ "lane").extract[String],
         (stats \ "winner").extract[Boolean],
+        matchVersion,
         PlayerStats(
           (stats \ "minionsKilled").extract[Int],
           (stats \ "kills").extract[Int],

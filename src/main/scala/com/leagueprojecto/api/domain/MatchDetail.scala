@@ -10,6 +10,7 @@ case class MatchDetail(
                         role: String, // participants \ timeline
                         lane: String, // participants \ timeline
                         winner: Boolean, // participants \ stats
+                        matchVersion: String,
                         stats: PlayerStats,
                         teams: Teams
                       )
