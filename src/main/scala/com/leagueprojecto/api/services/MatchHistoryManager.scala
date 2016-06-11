@@ -57,7 +57,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
       val mergedMatches = matches ++ matchDetails.map(m => m.matchId -> Some(m))
 
       if (!hasEmptyValues(mergedMatches)) {
-        sender ! Result(getValues(mergedMatches))
+        sender ! Result(getValues(mergedMatches).sortBy(_.matchId))
         stop()
       } else {
         goto(RetrievingFromRiot) using StateData(Some(RequestData(sender, msg)), mergedMatches)
@@ -72,7 +72,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
 
       val mergedMatches = matches ++ matchDetails.map(m => m.matchId -> Some(m))
       val mergedMatchesSeq = mergedMatches.values.map(_.get).toSeq
-      sender ! Result(mergedMatchesSeq)
+      sender ! Result(mergedMatchesSeq.sortBy(_.matchId))
 
       goto(PersistingToDb) using StateData(Some(RequestData(sender, msg)), mergedMatches)
 
