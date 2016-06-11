@@ -36,7 +36,7 @@ class RecentMatchesService extends Actor with RiotService with ActorLogging with
         case result: String =>
           val matchlist = transform(result.parseJson.asJsObject)
           println(s"${matchlist.size} matches found!")
-          val matchIds = matchlist.map(_.matchId).take(5).toSeq
+          val matchIds = matchlist.map(_.matchId).take(5)
           origSender ! Result(matchIds)
       }
   }
