@@ -7,7 +7,7 @@ case class Match(
                     queue: String,
                     season: String,
                     matchId: Long,
-                    role: String,
+                    role: Option[String],
                     platformId: String,
-                    lane: String
+                    lane: Option[String]
                       )
