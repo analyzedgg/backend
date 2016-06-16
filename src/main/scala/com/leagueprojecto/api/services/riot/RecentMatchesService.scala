@@ -23,20 +23,21 @@ class RecentMatchesService extends Actor with RiotService with ActorLogging with
     case GetRecentMatchIds(regionParam, summonerId, queueType, championList, amount) =>
       implicit val origSender = sender()
 
-      val matchlistEndpoint: Uri = endpoint(regionParam, matchlistBySummonerId + summonerId)
+      val queryparams: Map[String, String] = Map("beginIndex" -> (0 toString), "endIndex" -> (amount toString))
+      val matchlistEndpoint: Uri = endpoint(regionParam, matchlistBySummonerId + summonerId, queryparams)
 
       val future = riotRequest(RequestBuilding.Get(matchlistEndpoint))
-      future onSuccess successHandler(origSender, amount).orElse(defaultSuccessHandler(origSender))
+      future onSuccess successHandler(origSender).orElse(defaultSuccessHandler(origSender))
       future onFailure failureHandler(origSender)
   }
 
-  def successHandler(origSender: ActorRef, amount: Int): PartialFunction[HttpResponse, Unit] = {
+  def successHandler(origSender: ActorRef): PartialFunction[HttpResponse, Unit] = {
     case HttpResponse(OK, _, entity, _) =>
       Unmarshal(entity).to[String].onSuccess {
         case result: String =>
           val matchlist = transform(result.parseJson.asJsObject)
           println(s"${matchlist.size} matches found!")
-          val matchIds = matchlist.map(_.matchId).take(5)
+          val matchIds = matchlist.map(_.matchId)
           origSender ! Result(matchIds)
       }
   }

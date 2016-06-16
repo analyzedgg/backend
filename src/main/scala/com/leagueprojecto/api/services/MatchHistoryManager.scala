@@ -93,7 +93,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
         case StateData(Some(RequestData(_, GetMatches(region, summonerId, queueType, championList))), _) =>
           log.info("Requesting last 10 match ids from Riot")
           val recentMatchesActor = context.actorOf(RecentMatchesService.props)
-          recentMatchesActor ! RecentMatchesService.GetRecentMatchIds(region, summonerId, queueType, championList, 10)
+          recentMatchesActor ! RecentMatchesService.GetRecentMatchIds(region, summonerId, queueType, championList, 5)
         case failData =>
           log.error(s"Something went wrong when going from Idle -> RetrievingRecentMatchIdsFromRiot, got data: $failData")
       }
