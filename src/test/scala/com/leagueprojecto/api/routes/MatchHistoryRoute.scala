@@ -2,7 +2,6 @@ package com.leagueprojecto.api.routes
 
 import akka.actor.ActorRef
 import akka.actor.Status.Failure
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.testkit.{TestActor, TestProbe}
@@ -21,9 +20,10 @@ class MatchHistoryRoute extends RoutesTest {
   val validTeamRed = Team(List(Player(validSummonerId, "Minikoen")))
   val validTeamBlue = Team(List(Player(validSummonerId, "Waggles")))
   val validTeams = Teams(validTeamRed, validTeamBlue)
+  val validMatchVersion = "6.3.0.240"
   val validHistory =
     MatchDetail(12312312L, "RANKED_SOLO_5x5", 1600, 1432328493438L, validSummonerId, 100, "DUO_SUPPORT", "BOTTOM", winner = true,
-      validPlayerStats, validTeams)
+      validMatchVersion, validPlayerStats, validTeams)
   val validHistoryList = List(validHistory)
 
   override def setMatchHistoryAutoPilot(probe: TestProbe) = {

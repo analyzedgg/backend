@@ -17,8 +17,9 @@ class MatchCombinerTest extends FlatSpec with Matchers with GivenWhenThen {
   val validTeamRed = Team(List(Player(testSummonerId, "Minikoen")))
   val validTeamBlue = Team(List(Player(testSummonerId, "Waggles")))
   val validTeams = Teams(validTeamRed, validTeamBlue)
-  val testMatchDetail = MatchDetail(0, "SOLOQ", 1400, 123123123L, 234234234L, 100, "DUO_CARRY", "BOT", winner = true, PlayerStats
-  (100, 1, 2, 3), validTeams)
+  val validMatchVersion = "6.3.0.240"
+  val testMatchDetail = MatchDetail(0, "SOLOQ", 1400, 123123123L, 234234234L, 100, "DUO_CARRY", "BOT", winner = true,
+    validMatchVersion, PlayerStats(100, 1, 2, 3), validTeams)
 
   class TestMatchCombiner extends MatchCombiner {
     override protected def createMatchServiceActor: ActorRef = riotProbe.ref
