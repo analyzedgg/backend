@@ -2,6 +2,8 @@ package com.leagueprojecto.api.routes
 
 import akka.actor.ActorRef
 import akka.actor.Status.Failure
+// Do not remove the following import. IntelliJ might say it's not used, but it is for converting json to case classes.
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model.StatusCodes._
 import akka.testkit.{TestActor, TestProbe}
