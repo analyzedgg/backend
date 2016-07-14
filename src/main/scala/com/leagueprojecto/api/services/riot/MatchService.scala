@@ -4,7 +4,7 @@ import akka.actor.Status.Failure
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.model.{HttpResponse, Uri}
+import akka.http.scaladsl.model.{HttpResponse, StatusCodes, Uri}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.leagueprojecto.api.domain._
 import com.leagueprojecto.api.services.riot.SummonerService.SummonerNotFound
@@ -15,6 +15,7 @@ import org.json4s.native.Serialization
 object MatchService {
 
   case class GetMatch(regionParam: String, summonerId: Long, matchId: Long)
+  case class MatchRetrievalFailed(matchId: Long) extends Exception
 
   case class Result(matchDetail: MatchDetail)
 
@@ -32,11 +33,11 @@ class MatchService extends Actor with ActorLogging with RiotService {
       val matchEndpoint: Uri = endpoint(regionParam, matchById + matchId)
 
       val future = riotRequest(RequestBuilding.Get(matchEndpoint))
-      future onSuccess successHandler(origSender, summonerId).orElse(defaultSuccessHandler(origSender))
+      future onSuccess successHandler(origSender, summonerId, matchId).orElse(defaultSuccessHandler(origSender))
       future onFailure failureHandler
   }
 
-  def successHandler(origSender: ActorRef, summonerId: Long): PartialFunction[HttpResponse, Unit] = {
+  def successHandler(origSender: ActorRef, summonerId: Long, matchId: Long): PartialFunction[HttpResponse, Unit] = {
     case HttpResponse(OK, _, entity, _) =>
       Unmarshal(entity).to[String].onSuccess {
         case result: String =>
@@ -46,10 +47,14 @@ class MatchService extends Actor with ActorLogging with RiotService {
           origSender ! Result(singleMatch)
       }
 
+    case HttpResponse(StatusCodes.TooManyRequests, _, _, _) =>
+      log.warning("We're sending too many requests!")
+      origSender ! MatchRetrievalFailed(matchId)
+
     case HttpResponse(NotFound, _, _, _) =>
       val message = s"No match found by service '$service' for region '$region'"
       log.warning(message)
-      origSender ! Failure(new SummonerNotFound(message))
+      origSender ! MatchRetrievalFailed(matchId)
   }
 
   def failureHandler: PartialFunction[Throwable, Unit] = {
