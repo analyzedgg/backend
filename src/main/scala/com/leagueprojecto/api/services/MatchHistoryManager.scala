@@ -30,7 +30,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
 
   import MatchHistoryManager._
 
-  val dbService = context.actorOf(DatabaseService.props)
+  val dbService = context.actorOf(DatabaseService.props, "dbService")
 
   startWith(Idle, StateData(None, Map.empty))
 
@@ -48,6 +48,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
       // create the empty matchesMap which are to be filled by either the Db or Riot
       val matchesMap = matchIds.map(m => m -> None).toMap
       goto(RetrievingFromDb) using state.copy(matches = matchesMap)
+
 
     // todo: handle riot errors
   }
@@ -71,7 +72,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
       dbService ! SaveMatches(region, summonerId, matchDetails)
 
       val mergedMatches = matches ++ matchDetails.map(m => m.matchId -> Some(m))
-      val mergedMatchesSeq = mergedMatches.values.map(_.get).toSeq
+      val mergedMatchesSeq = mergedMatches.values.filter(_.isDefined).map(_.get).toSeq
       sender ! Result(mergedMatchesSeq.sortBy(_.matchId))
 
       goto(PersistingToDb) using StateData(Some(RequestData(sender, msg)), mergedMatches)
@@ -91,9 +92,9 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
     case Idle -> RetrievingRecentMatchIdsFromRiot =>
       nextStateData match {
         case StateData(Some(RequestData(_, GetMatches(region, summonerId, queueType, championList))), _) =>
-          log.info("Requesting last 10 match ids from Riot")
+          log.info("Requesting last 20 match ids from Riot")
           val recentMatchesActor = context.actorOf(RecentMatchesService.props)
-          recentMatchesActor ! RecentMatchesService.GetRecentMatchIds(region, summonerId, queueType, championList, 5)
+          recentMatchesActor ! RecentMatchesService.GetRecentMatchIds(region, summonerId, queueType, championList, 20)
         case failData =>
           log.error(s"Something went wrong when going from Idle -> RetrievingRecentMatchIdsFromRiot, got data: $failData")
       }
@@ -111,7 +112,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
         case StateData(Some(RequestData(_, GetMatches(region, summonerId, _, _))), matches) =>
           val matchesToRetrieve = matches.filter(_._2.isEmpty).keys
           log.info(s"going to get matches: [$matchesToRetrieve] from riot")
-          val matchesActor = context.actorOf(MatchCombiner.props)
+          val matchesActor = context.actorOf(MatchCombiner.props, "matchesActor")
           matchesActor ! MatchCombiner.GetMatches(region, summonerId, matchesToRetrieve.toSeq)
       }
   }

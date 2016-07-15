@@ -1,10 +1,12 @@
 package com.leagueprojecto.api.services
 
+import akka.actor.Status.Failure
 import akka.actor._
 import com.leagueprojecto.api.domain.MatchDetail
 import com.leagueprojecto.api.services.MatchCombiner._
-import com.leagueprojecto.api.services.riot.MatchService
-import com.leagueprojecto.api.services.riot.MatchService.GetMatch
+import com.leagueprojecto.api.services.riot.{MatchService, RiotService}
+import com.leagueprojecto.api.services.riot.MatchService.{GetMatch, MatchRetrievalFailed}
+
 import scala.concurrent.duration._
 
 object MatchCombiner {
@@ -33,7 +35,19 @@ class MatchCombiner extends FSM[State, StateData] with ActorLogging {
 
   when(GettingMatches, stateTimeout = 5 seconds) {
     case Event(MatchService.Result(matchDetail), state @ StateData(sender, matches)) =>
+
       val newMatches = matches + (matchDetail.matchId -> Some(matchDetail))
+
+      if (hasEmptyValues(newMatches)) {
+        goto(GettingMatches) using state.copy(matches = newMatches)
+      } else {
+        sender ! Result(getValuesInOrder(newMatches))
+        stop()
+      }
+
+    case Event(MatchService.MatchRetrievalFailed(matchId), state @ StateData(sender, matches)) =>
+
+      val newMatches = matches - matchId
 
       if (hasEmptyValues(newMatches)) {
         goto(GettingMatches) using state.copy(matches = newMatches)
