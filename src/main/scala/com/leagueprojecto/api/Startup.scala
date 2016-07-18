@@ -5,8 +5,11 @@ import akka.event.Logging
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
+import kamon.Kamon
 
 object Startup extends App with Routes {
+  Kamon.start()
+
   override implicit val system: ActorSystem = ActorSystem("api")
   override implicit val executor = system.dispatcher
   override val config = ConfigFactory.load()
