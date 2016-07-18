@@ -72,7 +72,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
       dbService ! SaveMatches(region, summonerId, matchDetails)
 
       val mergedMatches = matches ++ matchDetails.map(m => m.matchId -> Some(m))
-      val mergedMatchesSeq = mergedMatches.values.filter(_.isDefined).map(_.get).toSeq
+      val mergedMatchesSeq = mergedMatches.values.flatten.toSeq
       sender ! Result(mergedMatchesSeq.sortBy(_.matchId))
 
       goto(PersistingToDb) using StateData(Some(RequestData(sender, msg)), mergedMatches)

@@ -1,11 +1,10 @@
 package com.leagueprojecto.api.services
 
-import akka.actor.Status.Failure
 import akka.actor._
 import com.leagueprojecto.api.domain.MatchDetail
 import com.leagueprojecto.api.services.MatchCombiner._
-import com.leagueprojecto.api.services.riot.{MatchService, RiotService}
-import com.leagueprojecto.api.services.riot.MatchService.{GetMatch, MatchRetrievalFailed}
+import com.leagueprojecto.api.services.riot.MatchService
+import com.leagueprojecto.api.services.riot.MatchService.GetMatch
 
 import scala.concurrent.duration._
 
