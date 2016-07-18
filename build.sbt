@@ -23,7 +23,9 @@ libraryDependencies ++= {
 
   Seq(
     "io.kamon" %% "kamon-core" % kamonVersion,
+    "io.kamon" %% "kamon-scala" % kamonVersion,
     "io.kamon" %% "kamon-akka" % kamonVersion,
+    "io.kamon" %% "kamon-log-reporter" % kamonVersion,
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-remote" % akkaVersion,
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
@@ -41,25 +43,10 @@ libraryDependencies ++= {
     "org.json4s" %% "json4s-jackson" % json4sVersion
   )
 }
-
-val deployTask = TaskKey[Unit]("deploy", "Copies assembly jar to remote location")
-
-deployTask <<= assembly map { (asm) =>
-  val account = "pi@192.168.178.12"
-  val relativeLocal = new File("build.sbt").getAbsoluteFile.getParentFile
-  val local = asm.getAbsoluteFile.relativeTo(relativeLocal).get.toString
-  val remote = account + ":" + "league/" + asm.getName
-  println(s"Copying: $local -> $remote")
-  s"scp $local $remote".!
-
-  println("Run deployed app")
-  s"ssh $account cd league && ./run.sh".!
-}
-
 aspectjSettings
+
+fork in run := true
 
 javaOptions in run <++= AspectjKeys.weaverOptions in Aspectj
 
 mainClass in(Compile, run) := Some("com.leagueprojecto.api.Startup")
-
-fork in run := true
