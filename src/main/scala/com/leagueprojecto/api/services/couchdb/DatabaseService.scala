@@ -1,12 +1,14 @@
 package com.leagueprojecto.api.services.couchdb
 
-import akka.actor.{ActorLogging, Props, Actor}
+import akka.actor.{Actor, ActorLogging, Props}
+import akka.pattern.CircuitBreaker
+import scala.concurrent.duration._
 import com.ibm.couchdb.Res.Error
-import com.ibm.couchdb.{CouchException, TypeMapping, CouchDb}
+import com.ibm.couchdb.{CouchDb, CouchException, TypeMapping}
 import com.leagueprojecto.api.domain.{MatchDetail, Summoner}
 import org.http4s.Status.NotFound
 
-import scalaz.{\/-, -\/}
+import scalaz.{-\/, \/-}
 
 object DatabaseService {
   def props = Props(new DatabaseService)
@@ -18,6 +20,7 @@ object DatabaseService {
 
   case object NoSummonerFound
   case object SummonerSaved
+  case object NoMatchesFound
   case object MatchesSaved
   case class SummonerResult(summoner: Summoner)
   case class MatchesResult(matches: Seq[MatchDetail])
@@ -26,6 +29,7 @@ object DatabaseService {
 class DatabaseService extends Actor with ActorLogging {
 
   import DatabaseService._
+  import context.dispatcher
 
   private val config = context.system.settings.config
 
@@ -38,11 +42,22 @@ class DatabaseService extends Actor with ActorLogging {
   val summonerDb = couch.db("summoner-db", summonerMapping)
   val matchesDb = couch.db("matches-db", matchMapping)
 
+  val breaker =
+    new CircuitBreaker(context.system.scheduler, maxFailures = 5, callTimeout = 10.seconds, resetTimeout = 1.minute)
+      .onOpen(whenOpen())
+
+
+  private[this] def whenOpen(): Unit = {
+    println("Circuit breaker open")
+  }
+
   override def receive = {
     case GetSummoner(region, name) =>
       val id = s"$region:$name"
 
-      summonerDb.docs.get[Summoner](id).attemptRun match {
+      val summoners = breaker.withSyncCircuitBreaker(summonerDb.docs.get[Summoner](id).attemptRun)
+
+      summoners match {
         case \/-(summonerDoc) =>
           log.info(s"Yay got summoner from Db: $summonerDoc")
           sender() ! SummonerResult(summonerDoc.doc)
@@ -57,19 +72,27 @@ class DatabaseService extends Actor with ActorLogging {
     case GetMatches(region, summonerId, matchIds) =>
       val id = s"$region:$summonerId"
       val decoratedIds: Seq[String] = matchIds.map(key => s"$id:$key")
-      matchesDb.docs.getMany.queryIncludeDocsAllowMissing[MatchDetail](decoratedIds).attemptRun match {
+
+      val matches = breaker.withSyncCircuitBreaker(matchesDb.docs.getMany.queryIncludeDocsAllowMissing[MatchDetail](decoratedIds).attemptRun)
+
+      matches match {
         case \/-(matchesDocs) =>
           log.info(s"Yay, got ${matchesDocs.getDocsData.size} matches from Db")
           sender() ! MatchesResult(matchesDocs.getDocsData)
+        case -\/(CouchException(e: Error)) if e.status == NotFound =>
+          log.info(s"No matches found ($matchIds) from Db")
+          sender() ! NoMatchesFound
         case -\/(e) =>
           log.error(s"Error retrieving matches ($matchIds) from Db")
-          e.printStackTrace()
+          log.error(s"${e.getMessage}")
+          sender() ! NoMatchesFound
       }
 
     case SaveSummoner(region, summoner) =>
       val id = s"$region:${summoner.name}"
 
-      summonerDb.docs.create(summoner, id).attemptRun match {
+      val saveSummoner = breaker.withSyncCircuitBreaker(summonerDb.docs.create(summoner, id).attemptRun)
+      saveSummoner match {
         case \/-(_) =>
           log.info("Yay, summoner saved!")
           sender() ! SummonerSaved
@@ -82,8 +105,9 @@ class DatabaseService extends Actor with ActorLogging {
       val id = s"$region:$summonerId"
 
       val matchesById = matches map(m => s"$id:${m.matchId}" -> m) toMap
+      val saveMatches = breaker.withSyncCircuitBreaker(matchesDb.docs.createMany(matchesById).attemptRun)
 
-      matchesDb.docs.createMany(matchesById).attemptRun match {
+      saveMatches match {
         case \/-(_) =>
           log.info("Yay, matches are saved!")
           sender() ! MatchesSaved

@@ -1,11 +1,12 @@
 package com.leagueprojecto.api.services
 
-import akka.actor.{ActorLogging, FSM, ActorRef, Props}
+import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import com.leagueprojecto.api.domain.MatchDetail
-import com.leagueprojecto.api.services.MatchHistoryManager.{StateData, State}
+import com.leagueprojecto.api.services.MatchHistoryManager.{State, StateData}
 import com.leagueprojecto.api.services.couchdb.DatabaseService
-import com.leagueprojecto.api.services.couchdb.DatabaseService.{MatchesResult, MatchesSaved, SaveMatches}
+import com.leagueprojecto.api.services.couchdb.DatabaseService.{MatchesResult, MatchesSaved, NoMatchesFound, SaveMatches}
 import com.leagueprojecto.api.services.riot.RecentMatchesService
+
 import scala.concurrent.duration._
 
 object MatchHistoryManager {
@@ -49,7 +50,6 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
       val matchesMap = matchIds.map(m => m -> None).toMap
       goto(RetrievingFromDb) using state.copy(matches = matchesMap)
 
-
     // todo: handle riot errors
   }
 
@@ -63,6 +63,9 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
       } else {
         goto(RetrievingFromRiot) using StateData(Some(RequestData(sender, msg)), mergedMatches)
       }
+
+    case Event(NoMatchesFound, StateData(Some(RequestData(sender, msg)), matches)) =>
+      goto(RetrievingFromRiot) using StateData(Some(RequestData(sender, msg)), matches)
   }
 
   when(RetrievingFromRiot) {
