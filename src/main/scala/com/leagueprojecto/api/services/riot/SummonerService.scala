@@ -36,7 +36,6 @@ class SummonerService extends Actor with ActorLogging with RiotService with Json
       Unmarshal(entity).to[String].onSuccess {
         case result: String =>
           val summoner = transform(result.parseJson.asJsObject)
-          println(s"summoner found! $summoner")
           origSender ! Result(summoner)
       }
 
@@ -48,12 +47,11 @@ class SummonerService extends Actor with ActorLogging with RiotService with Json
 
   def failureHandler(origSender: ActorRef): PartialFunction[Throwable, Unit] = {
     case e: Exception =>
-      log.error(s"request failed for some reason: ${e.getMessage}")
-      e.printStackTrace()
+      log.error(s"GetSummonerByName request failed for reason: ${e.getMessage}")
   }
 
   private def transform(riotResult: JsObject): Summoner = {
     val firstKey = riotResult.fields.keys.head
-    riotResult.fields.get(firstKey).get.convertTo[Summoner]
+    riotResult.fields(firstKey).convertTo[Summoner]
   }
 }

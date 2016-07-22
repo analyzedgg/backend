@@ -43,10 +43,6 @@ class DatabaseService(couchDbCircuitBreaker: CircuitBreaker) extends Actor with 
   val summonerDb = couch.db("summoner-db", summonerMapping)
   val matchesDb = couch.db("matches-db", matchMapping)
 
-  private[this] def whenOpen(): Unit = {
-    println("Circuit breaker open")
-  }
-
   override def receive = {
     case GetSummoner(region, name) =>
       val id = s"$region:$name"
@@ -92,8 +88,7 @@ class DatabaseService(couchDbCircuitBreaker: CircuitBreaker) extends Actor with 
           log.info("Yay, summoner saved!")
           sender() ! SummonerSaved
         case -\/(e) =>
-          log.error(s"Error saving summoner ($id) in Db")
-          println(e)
+          log.error(s"Error saving summoner ($id) in Db with reason: ${e.getMessage}")
       }
 
     case SaveMatches(region, summonerId, matches) =>
@@ -107,8 +102,7 @@ class DatabaseService(couchDbCircuitBreaker: CircuitBreaker) extends Actor with 
           log.info("Yay, matches are saved!")
           sender() ! MatchesSaved
         case -\/(e) =>
-          log.error(s"Error saving matches ($id) in Db")
-          println(e)
+          log.error(s"Error saving matches ($id) in Db with reason: ${e.getMessage}")
       }
   }
 

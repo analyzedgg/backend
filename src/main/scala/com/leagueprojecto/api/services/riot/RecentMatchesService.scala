@@ -35,20 +35,19 @@ class RecentMatchesService extends Actor with RiotService with ActorLogging with
     case HttpResponse(OK, _, entity, _) =>
       Unmarshal(entity).to[String].onSuccess {
         case result: String =>
-          val matchlist = transform(result.parseJson.asJsObject)
-          println(s"${matchlist.size} matches found!")
-          val matchIds = matchlist.map(_.matchId)
+          val matchList = transform(result.parseJson.asJsObject)
+          val matchIds = matchList.map(_.matchId)
           origSender ! Result(matchIds)
       }
   }
 
   def failureHandler(origSender: ActorRef): PartialFunction[Throwable, Unit] = {
     case e: Exception =>
-      log.error(e, s"request failed for some reason")
+      log.error(s"GetRecentMatchIDS request failed for reason: ${e.getMessage}")
   }
 
   private def transform(riotResult: JsObject): List[Match] = {
     val firstKey = riotResult.fields.keys.head
-    riotResult.fields.get(firstKey).get.convertTo[List[Match]]
+    riotResult.fields(firstKey).convertTo[List[Match]]
   }
 }
