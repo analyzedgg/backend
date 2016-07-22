@@ -7,13 +7,14 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
-import akka.pattern.ask
+import akka.pattern.{CircuitBreaker, ask}
 import akka.util.Timeout
 import com.leagueprojecto.api.services.{MatchHistoryManager, SummonerManager}
 import com.leagueprojecto.api.services.SummonerManager.GetSummoner
-import com.leagueprojecto.api.services.riot.{SummonerService, RiotService}
+import com.leagueprojecto.api.services.riot.{RiotService, SummonerService}
 import com.typesafe.config.Config
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 
@@ -21,6 +22,9 @@ trait Routes extends JsonProtocols {
   implicit val system: ActorSystem
   implicit def executor: ExecutionContextExecutor
   implicit val timeout: Timeout = Timeout(1.minute)
+
+  lazy val couchDbCircuitBreaker =
+    new CircuitBreaker(system.scheduler, maxFailures = 5, callTimeout = 5.seconds, resetTimeout = 1.minute)(executor)
 
   def config: Config
   val logger: LoggingAdapter
@@ -94,8 +98,9 @@ trait Routes extends JsonProtocols {
   }
 
   def createSummonerActor: ActorRef =
-    system.actorOf(SummonerManager.props)
+    system.actorOf(SummonerManager.props(couchDbCircuitBreaker))
 
-  def createMatchHistoryActor: ActorRef =
-    system.actorOf(MatchHistoryManager.props)
+  def createMatchHistoryActor: ActorRef = {
+    system.actorOf(MatchHistoryManager.props(couchDbCircuitBreaker))
+  }
 }

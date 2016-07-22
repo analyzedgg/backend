@@ -1,13 +1,11 @@
 package com.leagueprojecto.api.services.riot
 
-import akka.actor.Status.Failure
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes, Uri}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.leagueprojecto.api.domain._
-import com.leagueprojecto.api.services.riot.SummonerService.SummonerNotFound
 import org.json4s.native.JsonMethods._
 import org.json4s._
 import org.json4s.native.Serialization
@@ -59,8 +57,7 @@ class MatchService extends Actor with ActorLogging with RiotService {
 
   def failureHandler: PartialFunction[Throwable, Unit] = {
     case e: Exception =>
-      println(s"request failed for some reason: ${e.getMessage}")
-      e.printStackTrace()
+      log.error(s"GetMatch request failed for reason: $e")
   }
 
   private def transform(riotResult: String): List[MatchDetail] = {
