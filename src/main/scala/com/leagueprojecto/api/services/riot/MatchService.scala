@@ -59,7 +59,7 @@ class MatchService extends Actor with ActorLogging with RiotService {
 
   def failureHandler: PartialFunction[Throwable, Unit] = {
     case e: Exception =>
-      log.error(s"GetMatch request failed for reason: ${e.getMessage}")
+      log.error(s"GetMatch request failed for reason: $e")
   }
 
   private def transform(riotResult: String): List[MatchDetail] = {

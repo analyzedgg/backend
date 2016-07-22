@@ -56,7 +56,7 @@ class DatabaseService(couchDbCircuitBreaker: CircuitBreaker) extends Actor with 
           log.info(s"No summoner found ($id) from Db")
           sender() ! NoResult
         case -\/(e) =>
-          log.error(s"Error retrieving summoner ($id) from Db")
+          log.error(s"Error retrieving summoner ($id) from Db with reason: $e")
           sender() ! NoResult
       }
 
@@ -74,8 +74,7 @@ class DatabaseService(couchDbCircuitBreaker: CircuitBreaker) extends Actor with 
           log.info(s"No matches found ($matchIds) from Db")
           sender() ! NoResult
         case -\/(e) =>
-          log.error(s"Error retrieving matches ($matchIds) from Db")
-          log.error(s"${e.getMessage}")
+          log.error(s"Error retrieving matches ($matchIds) from Db with reason: $e")
           sender() ! NoResult
       }
 
@@ -88,7 +87,7 @@ class DatabaseService(couchDbCircuitBreaker: CircuitBreaker) extends Actor with 
           log.info("Yay, summoner saved!")
           sender() ! SummonerSaved
         case -\/(e) =>
-          log.error(s"Error saving summoner ($id) in Db with reason: ${e.getMessage}")
+          log.error(s"Error saving summoner ($id) in Db with reason: $e")
       }
 
     case SaveMatches(region, summonerId, matches) =>
@@ -102,7 +101,7 @@ class DatabaseService(couchDbCircuitBreaker: CircuitBreaker) extends Actor with 
           log.info("Yay, matches are saved!")
           sender() ! MatchesSaved
         case -\/(e) =>
-          log.error(s"Error saving matches ($id) in Db with reason: ${e.getMessage}")
+          log.error(s"Error saving matches ($id) in Db with reason: $e")
       }
   }
 

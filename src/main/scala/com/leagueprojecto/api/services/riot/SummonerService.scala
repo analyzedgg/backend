@@ -47,7 +47,7 @@ class SummonerService extends Actor with ActorLogging with RiotService with Json
 
   def failureHandler(origSender: ActorRef): PartialFunction[Throwable, Unit] = {
     case e: Exception =>
-      log.error(s"GetSummonerByName request failed for reason: ${e.getMessage}")
+      log.error(s"GetSummonerByName request failed for reason: $e")
   }
 
   private def transform(riotResult: JsObject): Summoner = {

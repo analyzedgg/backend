@@ -23,10 +23,10 @@ class RecentMatchesService extends Actor with RiotService with ActorLogging with
     case GetRecentMatchIds(regionParam, summonerId, queueType, championList, amount) =>
       implicit val origSender = sender()
 
-      val queryparams: Map[String, String] = Map("beginIndex" -> (0 toString), "endIndex" -> (amount toString))
-      val matchlistEndpoint: Uri = endpoint(regionParam, matchlistBySummonerId + summonerId, queryparams)
+      val queryParams: Map[String, String] = Map("beginIndex" -> (0 toString), "endIndex" -> (amount toString))
+      val matchListEndpoint: Uri = endpoint(regionParam, matchlistBySummonerId + summonerId, queryParams)
 
-      val future = riotRequest(RequestBuilding.Get(matchlistEndpoint))
+      val future = riotRequest(RequestBuilding.Get(matchListEndpoint))
       future onSuccess successHandler(origSender).orElse(defaultSuccessHandler(origSender))
       future onFailure failureHandler(origSender)
   }
@@ -43,7 +43,7 @@ class RecentMatchesService extends Actor with RiotService with ActorLogging with
 
   def failureHandler(origSender: ActorRef): PartialFunction[Throwable, Unit] = {
     case e: Exception =>
-      log.error(s"GetRecentMatchIDS request failed for reason: ${e.getMessage}")
+      log.error(s"GetRecentMatchIDS request failed for reason: $e")
   }
 
   private def transform(riotResult: JsObject): List[Match] = {
