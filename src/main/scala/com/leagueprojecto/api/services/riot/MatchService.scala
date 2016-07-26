@@ -28,7 +28,7 @@ class MatchService extends Actor with ActorLogging with RiotService {
     case GetMatch(regionParam, summonerId, matchId) =>
       implicit val origSender: ActorRef = sender()
 
-      val matchEndpoint: Uri = endpoint(regionParam, matchById + matchId)
+      val matchEndpoint: Uri = endpoint("api/lol", regionParam, matchById + matchId)
 
       val future = riotRequest(RequestBuilding.Get(matchEndpoint))
       future onSuccess successHandler(origSender, summonerId, matchId).orElse(defaultSuccessHandler(origSender))
