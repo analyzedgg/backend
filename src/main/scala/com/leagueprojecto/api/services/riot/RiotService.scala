@@ -31,7 +31,7 @@ this: Actor with ActorLogging =>
   protected var region: String = ""
   protected var service: String = ""
 
-  protected def riotConnectionFlow(hostType: String): Flow[HttpRequest, HttpResponse, Any] = {
+   def riotConnectionFlow(hostType: String): Flow[HttpRequest, HttpResponse, Any] = {
     val hostname: String = config.getString(s"riot.api.hostname.$hostType")
     val host = hostname.replace(":region", region)
 
