@@ -1,28 +1,41 @@
 package com.leagueprojecto.api.services.riot
 
 import akka.actor.Status.Failure
-import akka.actor.{ActorRef, ActorLogging, Actor}
+import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.{HttpResponse, HttpRequest}
-import akka.stream.{Materializer, ActorMaterializer}
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.{ActorMaterializer, Materializer}
 import akka.stream.scaladsl.{Flow, Sink, Source}
+import com.fasterxml.jackson.core.{JsonFactory, JsonParser}
+import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 import com.leagueprojecto.api.services.riot.RiotService.{ServiceNotAvailable, TooManyRequests}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object RiotService {
+
   class ServiceNotAvailable(message: String) extends Exception
+
   class TooManyRequests(message: String) extends Exception
+
 }
 
 trait RiotService {
   this: Actor with ActorLogging =>
 
+  val objectMapper = new ObjectMapper with ScalaObjectMapper
+  objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+  objectMapper.registerModule(DefaultScalaModule)
+
   private val config = context.system.settings.config
 
   implicit def executor: ExecutionContextExecutor = context.system.dispatcher
+
   implicit val materializer: Materializer = ActorMaterializer()
 
   private val hostname: String = config.getString("riot.api.hostname")
@@ -54,6 +67,17 @@ trait RiotService {
 
   protected def riotRequest(httpRequest: HttpRequest): Future[HttpResponse] =
     Source.single(httpRequest).via(riotConnectionFlow).runWith(Sink.head)
+
+  protected def mapRiotTo[R](response: Future[HttpResponse], responseClass: Class[R]): Future[R] = {
+    val mappedResult: Future[String] = for {
+      responseEntity: HttpResponse <- response
+      responseString: String <- Unmarshal(responseEntity.entity).to[String]
+    } yield responseString
+
+    mappedResult.map { string =>
+         objectMapper.readValue(string, responseClass)
+    }
+  }
 
   protected def defaultSuccessHandler(origSender: ActorRef): PartialFunction[HttpResponse, Unit] = {
     case HttpResponse(TooManyRequests, _, _, _) =>

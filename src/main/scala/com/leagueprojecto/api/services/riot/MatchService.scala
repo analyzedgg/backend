@@ -1,5 +1,6 @@
 package com.leagueprojecto.api.services.riot
 
+import akka.pattern.pipe
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model.StatusCodes._
@@ -9,6 +10,8 @@ import com.leagueprojecto.api.domain._
 import org.json4s.native.JsonMethods._
 import org.json4s._
 import org.json4s.native.Serialization
+
+import scala.concurrent.Future
 
 object MatchService {
 
@@ -24,15 +27,24 @@ class MatchService extends Actor with ActorLogging with RiotService {
 
   import MatchService._
 
+  private[this] var summoner: Long = _
+
   override def receive: Receive = {
     case GetMatch(regionParam, summonerId, matchId) =>
-      implicit val origSender: ActorRef = sender()
+      val origSender: ActorRef = sender()
+      summoner = summonerId
 
       val matchEndpoint: Uri = endpoint(regionParam, matchById + matchId)
-
       val future = riotRequest(RequestBuilding.Get(matchEndpoint))
-      future onSuccess successHandler(origSender, summonerId, matchId).orElse(defaultSuccessHandler(origSender))
-      future onFailure failureHandler
+
+      mapRiotTo(future, classOf[RiotMatch]).pipeTo(self)(origSender)
+
+    case Some(matchDetails: RiotMatch) =>
+      log.debug(s"got match back: $matchDetails")
+//            val singleMatch: RiotMatch = matchDetails.participants.filter(_.participantId == summoner)
+      sender() ! "hai"
+    case x =>
+      log.error(s"Something went wrong retrieving matches: $x")
   }
 
   def successHandler(origSender: ActorRef, summonerId: Long, matchId: Long): PartialFunction[HttpResponse, Unit] = {
