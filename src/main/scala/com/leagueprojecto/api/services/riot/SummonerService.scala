@@ -24,7 +24,7 @@ class SummonerService extends Actor with ActorLogging with RiotService with Json
     case GetSummonerByName(regionParam: String, name: String) =>
       val origSender: ActorRef = sender()
 
-      val summonerEndpoint: Uri = endpoint(regionParam, summonerByName + name)
+      val summonerEndpoint: Uri = endpoint("api/lol", regionParam, summonerByName + name)
 
       val future = riotRequest(RequestBuilding.Get(summonerEndpoint))
       future onSuccess successHandler(origSender).orElse(defaultSuccessHandler(origSender))

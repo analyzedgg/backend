@@ -18,21 +18,21 @@ object RiotService {
 }
 
 trait RiotService {
-  this: Actor with ActorLogging =>
+this: Actor with ActorLogging =>
 
   private val config = context.system.settings.config
 
   implicit def executor: ExecutionContextExecutor = context.system.dispatcher
   implicit val materializer: Materializer = ActorMaterializer()
 
-  private val hostname: String = config.getString("riot.api.hostname")
   private val port: Int = config.getInt("riot.api.port")
   private val api_key: String = config.getString("riot.api.key").trim
 
   protected var region: String = ""
   protected var service: String = ""
 
-  lazy val riotConnectionFlow: Flow[HttpRequest, HttpResponse, Any] = {
+   def riotConnectionFlow(hostType: String): Flow[HttpRequest, HttpResponse, Any] = {
+    val hostname: String = config.getString(s"riot.api.hostname.$hostType")
     val host = hostname.replace(":region", region)
 
     if (config.getBoolean("riot.api.tls")) {
@@ -42,18 +42,18 @@ trait RiotService {
     }
   }
 
-  protected def endpoint(regionParam: String, serviceParam: String, queryParams: Map[String, String] = Map.empty): Uri = {
+  protected def endpoint(prefix: String, regionParam: String, serviceParam: String, queryParams: Map[String, String] = Map.empty): Uri = {
     region = regionParam
     service = serviceParam
 
     val queryString = (queryParams + ("api_key" -> api_key)).collect { case x => x._1 + "=" + x._2 }.mkString("&")
-    val URL = s"/api/lol/$region/$service?$queryString"
+    val URL = s"/$prefix/$region/$service?$queryString"
     log.debug(s"endpoint: $URL")
     URL
   }
 
-  protected def riotRequest(httpRequest: HttpRequest): Future[HttpResponse] =
-    Source.single(httpRequest).via(riotConnectionFlow).runWith(Sink.head)
+  protected def riotRequest(httpRequest: HttpRequest, hostType: String = "api"): Future[HttpResponse] =
+    Source.single(httpRequest).via(riotConnectionFlow(hostType)).runWith(Sink.head)
 
   protected def defaultSuccessHandler(origSender: ActorRef): PartialFunction[HttpResponse, Unit] = {
     case HttpResponse(TooManyRequests, _, _, _) =>
@@ -73,7 +73,8 @@ trait RiotService {
   }
 
   // Services
+  val championByTags = config.getString("riot.services.championByTags.endpoint")
   val summonerByName = config.getString("riot.services.summonerbyname.endpoint")
   val matchById = config.getString("riot.services.match.endpoint")
-  val matchlistBySummonerId = config.getString("riot.services.matchlist.endpoint")
+  val matchListBySummonerId = config.getString("riot.services.matchlist.endpoint")
 }

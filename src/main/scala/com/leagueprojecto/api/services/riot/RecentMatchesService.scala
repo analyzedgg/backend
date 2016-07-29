@@ -24,7 +24,7 @@ class RecentMatchesService extends Actor with RiotService with ActorLogging with
       implicit val origSender = sender()
 
       val queryParams: Map[String, String] = Map("beginIndex" -> (0 toString), "endIndex" -> (amount toString))
-      val matchListEndpoint: Uri = endpoint(regionParam, matchlistBySummonerId + summonerId, queryParams)
+      val matchListEndpoint: Uri = endpoint("api/lol", regionParam, matchListBySummonerId + summonerId, queryParams)
 
       val future = riotRequest(RequestBuilding.Get(matchListEndpoint))
       future onSuccess successHandler(origSender).orElse(defaultSuccessHandler(origSender))
