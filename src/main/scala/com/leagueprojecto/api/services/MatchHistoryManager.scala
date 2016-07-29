@@ -2,7 +2,7 @@ package com.leagueprojecto.api.services
 
 import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import akka.pattern.CircuitBreaker
-import com.leagueprojecto.api.domain.RiotMatch
+import com.leagueprojecto.api.domain.MatchDetail
 import com.leagueprojecto.api.services.MatchHistoryManager.{State, StateData}
 import com.leagueprojecto.api.services.couchdb.DatabaseService
 import com.leagueprojecto.api.services.couchdb.DatabaseService.{MatchesResult, MatchesSaved, NoResult, SaveMatches}
@@ -21,9 +21,9 @@ object MatchHistoryManager {
   case class GetMatches(region: String, summonerId: Long, queueType: String, championList: String)
 
   case class RequestData(sender: ActorRef, getMatches: GetMatches)
-  case class StateData(requestData: Option[RequestData], matches: Map[Long, Option[RiotMatch]])
+  case class StateData(requestData: Option[RequestData], matches: Map[Long, Option[MatchDetail]])
 
-  case class Result(data: Seq[RiotMatch])
+  case class Result(data: Seq[MatchDetail])
 
   def props(couchDbCircuitBreaker: CircuitBreaker) = Props(new MatchHistoryManager(couchDbCircuitBreaker))
 }
@@ -44,7 +44,7 @@ class MatchHistoryManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[Sta
   when(RetrievingRecentMatchIdsFromRiot) {
     case Event(RecentMatchesService.Result(matchIds), StateData(Some(RequestData(sender, _)), _)) if matchIds.isEmpty =>
       // In case there are no match ids, return an empty MatchHistory Seq back to the sender.
-      sender ! Result(Seq.empty[RiotMatch])
+      sender ! Result(Seq.empty[MatchDetail])
       log.debug("Returning matches from couchDB")
       stop()
     case Event(RecentMatchesService.Result(matchIds), state) =>
@@ -129,9 +129,9 @@ class MatchHistoryManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[Sta
       stop()
   }
 
-  private def hasEmptyValues(mergedMatches: Map[Long, Option[RiotMatch]]): Boolean =
+  private def hasEmptyValues(mergedMatches: Map[Long, Option[MatchDetail]]): Boolean =
     mergedMatches.values.exists(_.isEmpty)
 
-  private def getValues(mergedMatches: Map[Long, Option[RiotMatch]]): Seq[RiotMatch] =
+  private def getValues(mergedMatches: Map[Long, Option[MatchDetail]]): Seq[MatchDetail] =
     mergedMatches.values.map(_.get).toSeq
 }

@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorLogging, Props}
 import akka.pattern.{CircuitBreaker, CircuitBreakerOpenException}
 import com.ibm.couchdb.Res.Error
 import com.ibm.couchdb.{CouchDb, CouchException, TypeMapping}
-import com.leagueprojecto.api.domain.{RiotMatch, Summoner}
+import com.leagueprojecto.api.domain.{MatchDetail, Summoner}
 import org.http4s.Status.NotFound
 
 import scala.util.{Failure, Success, Try}
@@ -15,12 +15,12 @@ object DatabaseService {
   case class GetSummoner(region: String, name: String)
   case class SaveSummoner(region: String, summoner: Summoner)
   case class GetMatches(region: String, summonerId: Long, matchIds: Seq[Long])
-  case class SaveMatches(region: String, summonerId: Long, matches: Seq[RiotMatch])
+  case class SaveMatches(region: String, summonerId: Long, matches: Seq[MatchDetail])
 
   case object SummonerSaved
   case object MatchesSaved
   case class SummonerResult(summoner: Summoner)
-  case class MatchesResult(matches: Seq[RiotMatch])
+  case class MatchesResult(matches: Seq[MatchDetail])
 
   case object NoResult
 
@@ -38,7 +38,7 @@ class DatabaseService(couchDbCircuitBreaker: CircuitBreaker) extends Actor with 
 
   val couch = CouchDb(hostname, port)
   val summonerMapping = TypeMapping(classOf[Summoner] -> "Summoner")
-  val matchMapping = TypeMapping(classOf[RiotMatch] -> "MatchDetail")
+  val matchMapping = TypeMapping(classOf[MatchDetail] -> "MatchDetail")
   val summonerDb = couch.db("summoner-db", summonerMapping)
   val matchesDb = couch.db("matches-db", matchMapping)
 
@@ -63,7 +63,7 @@ class DatabaseService(couchDbCircuitBreaker: CircuitBreaker) extends Actor with 
       val id = s"$region:$summonerId"
       val decoratedIds: Seq[String] = matchIds.map(key => s"$id:$key")
 
-      val matches = tryWithCircuitBreaker(matchesDb.docs.getMany.queryIncludeDocsAllowMissing[RiotMatch](decoratedIds).attemptRun)
+      val matches = tryWithCircuitBreaker(matchesDb.docs.getMany.queryIncludeDocsAllowMissing[MatchDetail](decoratedIds).attemptRun)
 
       matches match {
         case \/-(matchesDocs) =>

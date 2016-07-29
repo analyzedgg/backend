@@ -1,4 +1,4 @@
-package com.leagueprojecto.api.domain
+package com.leagueprojecto.api.domain.riot
 
 case class RiotMatch(
                       matchId: Long,
@@ -42,5 +42,6 @@ case class ParticipantStats(
                              assists: Long,
                              deaths: Long,
                              kills: Long,
-                             minionsKilled: Long
+                             minionsKilled: Long,
+                             winner: Boolean
                            )
