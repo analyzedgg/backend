@@ -1,141 +1,65 @@
 package com.leagueprojecto.api.services.riot
 
-import akka.pattern.pipe
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import akka.http.scaladsl.client.RequestBuilding
-import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes, Uri}
-import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.pattern.pipe
 import com.leagueprojecto.api.domain._
-import org.json4s.native.JsonMethods._
-import org.json4s._
-import org.json4s.native.Serialization
-
-import scala.concurrent.Future
+import com.leagueprojecto.api.services.riot.MatchService._
 
 object MatchService {
 
+  sealed trait State
+  case object Idle extends State
+  case object WaitingForRiotResponse extends State
+  case object RiotRequestFinished extends State
+
+  sealed trait Data
+  case object Empty extends Data
+  case class RequestData(origin: ActorRef, matchId: Long, summerId: Long) extends Data
   case class GetMatch(regionParam: String, summonerId: Long, matchId: Long)
+
   case class MatchRetrievalFailed(matchId: Long) extends Exception
 
-  case class Result(matchDetail: MatchDetail)
+  case class Result(riotMatch: RiotMatch)
 
   def props = Props(new MatchService)
 }
 
-class MatchService extends Actor with ActorLogging with RiotService {
+class MatchService extends FSM[State, Data] with ActorLogging with RiotService {
 
-  import MatchService._
+  startWith(Idle, Empty)
 
-  private[this] var summoner: Long = _
-
-  override def receive: Receive = {
-    case GetMatch(regionParam, summonerId, matchId) =>
+  when(Idle) {
+    case Event(GetMatch(regionParam, summonerId, matchId), Empty) =>
       val origSender: ActorRef = sender()
-      summoner = summonerId
 
       val matchEndpoint: Uri = endpoint(regionParam, matchById + matchId)
-      val future = riotRequest(RequestBuilding.Get(matchEndpoint))
+      riotRequest(RequestBuilding.Get(matchEndpoint)).pipeTo(self)
 
-      mapRiotTo(future, classOf[RiotMatch]).pipeTo(self)(origSender)
+      goto(WaitingForRiotResponse) using RequestData(origSender, summonerId, matchId)
+  }
 
-    case Some(matchDetails: RiotMatch) =>
-      log.debug(s"got match back: $matchDetails")
-//            val singleMatch: RiotMatch = matchDetails.participants.filter(_.participantId == summoner)
-      sender() ! "hai"
-    case x =>
+  when(WaitingForRiotResponse) {
+    case Event(msg@HttpResponse(StatusCodes.OK, _, entity, _), data: RequestData) =>
+      mapRiotTo(entity, classOf[RiotMatch]).pipeTo(self)
+      goto(RiotRequestFinished) using data
+    case Event(x, RequestData(origSender, _, matchId)) =>
       log.error(s"Something went wrong retrieving matches: $x")
-  }
-
-  def successHandler(origSender: ActorRef, summonerId: Long, matchId: Long): PartialFunction[HttpResponse, Unit] = {
-    case HttpResponse(OK, _, entity, _) =>
-      Unmarshal(entity).to[String].onSuccess {
-        case result: String =>
-          val matchDetails = transform(result)
-          log.debug(s"got match back: $matchDetails")
-          val singleMatch: MatchDetail = matchDetails.filter(_.summonerId == summonerId).head
-          origSender ! Result(singleMatch)
-      }
-
-    case HttpResponse(StatusCodes.TooManyRequests, _, _, _) =>
-      log.warning("We're sending too many requests!")
       origSender ! MatchRetrievalFailed(matchId)
-
-    case HttpResponse(NotFound, _, _, _) =>
-      val message = s"No match found by service '$service' for region '$region'"
-      log.warning(message)
-      origSender ! MatchRetrievalFailed(matchId)
+      stop()
   }
 
-  def failureHandler: PartialFunction[Throwable, Unit] = {
-    case e: Exception =>
-      log.error(s"GetMatch request failed for reason: $e")
-  }
-
-  private def transform(riotResult: String): List[MatchDetail] = {
-    implicit val formats = Serialization.formats(NoTypeHints)
-
-    val matchObject = parse(riotResult)
-
-    val (matchId, queueType, matchDuration, matchCreation, matchVersion) = (
-      (matchObject \ "matchId").extract[Long],
-      (matchObject \ "queueType").extract[String],
-      (matchObject \ "matchDuration").extract[Int],
-      (matchObject \ "matchCreation").extract[Long],
-      (matchObject \ "matchVersion").extract[String]
-      )
-
-    val participantIds = (matchObject \ "participantIdentities").children.map(pId =>
-      ((pId \ "participantId").extract[Int], (pId \ "player" \ "summonerId").extract[Long])
-    ).toMap
-
-    val blue: List[Player] = getPlayersFromTeam(matchObject, 100)
-    val red: List[Player] = getPlayersFromTeam(matchObject, 200)
-
-    (matchObject \ "participants").children.map(p => {
-      val (stats, timeline) = (p \ "stats", p \ "timeline")
-
-      MatchDetail(
-        matchId,
-        queueType,
-        matchDuration,
-        matchCreation,
-        participantIds((p \ "participantId").extract[Int]),
-        (p \ "championId").extract[Int],
-        (timeline \ "role").extract[String],
-        (timeline \ "lane").extract[String],
-        (stats \ "winner").extract[Boolean],
-        matchVersion,
-        PlayerStats(
-          (stats \ "minionsKilled").extract[Int],
-          (stats \ "kills").extract[Int],
-          (stats \ "deaths").extract[Int],
-          (stats \ "assists").extract[Int]
-        ),
-        Teams(Team(blue), Team(red))
-      )
-    })
-  }
-
-  private[this] def getPlayersFromTeam(matchObject: JValue, teamId: Int)(implicit formats: Formats): List[Player] = {
-    // Create a list of all participants in `teamId`
-    val participantIdsInTeam: List[Long] = (matchObject \ "participants").children.map(p =>
-      (p \ "participantId").extract[Long] -> (p \ "teamId").extract[Int]
-    ).filter(_._2 == teamId).map(_._1)
-
-    // Get the id and name of all above summoners
-    (matchObject \ "participantIdentities").children.flatMap(pId => {
-      val participantId = (pId \ "participantId").extract[Long]
-
-      if (participantIdsInTeam.contains(participantId)) {
-        Some(Player(
-          (pId \ "player" \ "summonerId").extract[Long],
-          (pId \ "player" \ "summonerName").extract[String])
-        )
-      } else {
-        None
-      }
-    })
+  // TODO: Now we filter the information of one person, but we could return all the user data to save in the db, would be more data on the frontend as counterpoint
+  when(RiotRequestFinished) {
+    case Event(matchDetails: RiotMatch, RequestData(origSender, summonerId, matchId)) =>
+      log.debug(s"got match back: $matchDetails")
+      val givenParticipantsIdentity = matchDetails.participantIdentities.filter(_.player.summonerId == summonerId)
+      val givenParticipantData = matchDetails.participants.filter(_.participantId == givenParticipantsIdentity.head.participantId)
+      val singleMatch: RiotMatch = matchDetails.copy(participantIdentities = givenParticipantsIdentity, participants = givenParticipantData)
+      log.debug(s"returning single match for $summonerId: $singleMatch")
+      origSender ! Result(singleMatch)
+      stop()
   }
 }
 

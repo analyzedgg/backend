@@ -1,24 +1,27 @@
 package com.leagueprojecto.api.domain
 
-
 case class RiotMatch(
-                      region: String,
+                      matchId: Long,
                       queueType: String,
                       matchDuration: Long,
                       matchCreation: Long,
                       participantIdentities: Seq[ParticipantIdentity],
                       participants: Seq[Participant],
                       matchVersion: String
+                      //teams: Seq[Team]  //We don't use any data from Team right now
                     )
 
 case class Participant(
-                        participantId: Long,
                         championId: Long,
-                        timeLine: TimeLine,
+                        participantId: Long,
+                        teamId: Long,
+                        timeline: ParticipantTimeline,
                         stats: ParticipantStats
                       )
+
 case class ParticipantIdentity(
-                              player: Player
+                                participantId: Long,
+                                player: Player
                               )
 
 case class Player(
@@ -26,10 +29,14 @@ case class Player(
                    summonerName: String
                  )
 
-case class TimeLine(
-                     role: String,
-                     lane: String
-                   )
+case class ParticipantTimeline(
+                                role: String,
+                                lane: String
+                              )
+
+/*case class Team(
+                 teamId: Long
+               )*/
 
 case class ParticipantStats(
                              assists: Long,

@@ -9,7 +9,6 @@ import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.stream.scaladsl.{Flow, Sink, Source}
-import com.fasterxml.jackson.core.{JsonFactory, JsonParser}
 import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
@@ -68,14 +67,14 @@ trait RiotService {
   protected def riotRequest(httpRequest: HttpRequest): Future[HttpResponse] =
     Source.single(httpRequest).via(riotConnectionFlow).runWith(Sink.head)
 
-  protected def mapRiotTo[R](response: Future[HttpResponse], responseClass: Class[R]): Future[R] = {
+  protected def mapRiotTo[R](response: ResponseEntity, responseClass: Class[R]): Future[R] = {
+
     val mappedResult: Future[String] = for {
-      responseEntity: HttpResponse <- response
-      responseString: String <- Unmarshal(responseEntity.entity).to[String]
+      responseString: String <- Unmarshal(response).to[String]
     } yield responseString
 
     mappedResult.map { string =>
-         objectMapper.readValue(string, responseClass)
+      objectMapper.readValue(string, responseClass)
     }
   }
 

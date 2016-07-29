@@ -1,7 +1,7 @@
 package com.leagueprojecto.api.services
 
 import akka.actor._
-import com.leagueprojecto.api.domain.MatchDetail
+import com.leagueprojecto.api.domain.RiotMatch
 import com.leagueprojecto.api.services.MatchCombiner._
 import com.leagueprojecto.api.services.riot.MatchService
 import com.leagueprojecto.api.services.riot.MatchService.GetMatch
@@ -16,8 +16,8 @@ object MatchCombiner {
   case object Idle extends State
   case object GettingMatches extends State
 
-  case class StateData(sender: ActorRef, matches: Map[Long, Option[MatchDetail]])
-  case class Result(matches: Seq[MatchDetail])
+  case class StateData(sender: ActorRef, matches: Map[Long, Option[RiotMatch]])
+  case class Result(matches: Seq[RiotMatch])
 
   def props = Props(new MatchCombiner)
 }
@@ -33,9 +33,9 @@ class MatchCombiner extends FSM[State, StateData] with ActorLogging {
   }
 
   when(GettingMatches, stateTimeout = 5 seconds) {
-    case Event(MatchService.Result(matchDetail), state @ StateData(sender, matches)) =>
+    case Event(MatchService.Result(riotMatch: RiotMatch), state @ StateData(sender, matches)) =>
 
-      val newMatches = matches + (matchDetail.matchId -> Some(matchDetail))
+      val newMatches = matches + (riotMatch.matchId -> Some(riotMatch))
 
       if (hasEmptyValues(newMatches)) {
         goto(GettingMatches) using state.copy(matches = newMatches)
@@ -61,10 +61,10 @@ class MatchCombiner extends FSM[State, StateData] with ActorLogging {
       stop()
   }
 
-  private def hasEmptyValues(mergedMatches: Map[Long, Option[MatchDetail]]): Boolean =
+  private def hasEmptyValues(mergedMatches: Map[Long, Option[RiotMatch]]): Boolean =
     mergedMatches.values.exists(_.isEmpty)
 
-  private def getValuesInOrder(mergedMatches: Map[Long, Option[MatchDetail]]): Seq[MatchDetail] =
+  private def getValuesInOrder(mergedMatches: Map[Long, Option[RiotMatch]]): Seq[RiotMatch] =
     mergedMatches.values.filter(_.isDefined).map(_.get).toSeq.sortBy(_.matchId)
 
   protected def createMatchServiceActor: ActorRef =
