@@ -36,7 +36,7 @@ class MatchHistoryRoute extends RoutesTest {
           case GetMatches(_, 123456789, _, _) =>
             sender ! MatchHistoryManager.Result(validHistoryList)
           case GetMatches(_, 987654321, _, _) =>
-            sender ! Failure(new SummonerNotFound(""))
+            sender ! Failure(SummonerNotFound)
         }
         TestActor.KeepRunning
       }

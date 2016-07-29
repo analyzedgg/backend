@@ -3,6 +3,7 @@ package com.leagueprojecto.api.services.riot
 import akka.actor.Status.Failure
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
@@ -41,10 +42,7 @@ trait RiotService {
   private val port: Int = config.getInt("riot.api.port")
   private val api_key: String = config.getString("riot.api.key").trim
 
-  protected var region: String = ""
-  protected var service: String = ""
-
-  lazy val riotConnectionFlow: Flow[HttpRequest, HttpResponse, Any] = {
+  private[this] def riotConnectionFlow(region: String, service: String): Flow[HttpRequest, HttpResponse, Any] = {
     val host = hostname.replace(":region", region)
 
     if (config.getBoolean("riot.api.tls")) {
@@ -54,18 +52,12 @@ trait RiotService {
     }
   }
 
-  protected def endpoint(regionParam: String, serviceParam: String, queryParams: Map[String, String] = Map.empty): Uri = {
-    region = regionParam
-    service = serviceParam
-
+  protected def riotGetRequest(regionParam: String, serviceParam: String, queryParams: Map[String, String] = Map.empty): Future[HttpResponse] = {
     val queryString = (queryParams + ("api_key" -> api_key)).collect { case x => x._1 + "=" + x._2 }.mkString("&")
-    val URL = s"/api/lol/$region/$service?$queryString"
+    val URL = s"/api/lol/$regionParam/$serviceParam?$queryString"
     log.debug(s"endpoint: $URL")
-    URL
+    Source.single(RequestBuilding.Get(URL)).via(riotConnectionFlow(regionParam, serviceParam)).runWith(Sink.head)
   }
-
-  protected def riotRequest(httpRequest: HttpRequest): Future[HttpResponse] =
-    Source.single(httpRequest).via(riotConnectionFlow).runWith(Sink.head)
 
   protected def mapRiotTo[R](response: ResponseEntity, responseClass: Class[R]): Future[R] = {
 
@@ -73,26 +65,10 @@ trait RiotService {
       responseString: String <- Unmarshal(response).to[String]
     } yield responseString
 
-    mappedResult.map { string =>
-      objectMapper.readValue(string, responseClass)
+    mappedResult.map { jsonString =>
+      log.debug(s"Got json string $jsonString")
+      objectMapper.readValue(jsonString, responseClass)
     }
-  }
-
-  protected def defaultSuccessHandler(origSender: ActorRef): PartialFunction[HttpResponse, Unit] = {
-    case HttpResponse(TooManyRequests, _, _, _) =>
-      val message = "Too many requests"
-      log.warning(message)
-      origSender ! Failure(new TooManyRequests(message))
-
-    case HttpResponse(ServiceUnavailable, _, _, _) =>
-      val message = s"Service '$service' not available"
-      log.warning(message)
-      origSender ! Failure(new ServiceNotAvailable(message))
-
-    case HttpResponse(status, _, _, _) =>
-      val message = s"Something went wrong. API call error code: ${status.intValue()}"
-      log.warning(message)
-      origSender ! Failure(new IllegalStateException(message))
   }
 
   // Services

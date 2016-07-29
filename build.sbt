@@ -18,7 +18,6 @@ libraryDependencies ++= {
   val logbackVersion = "1.1.2"
   val jacksonVersion: String = "2.7.4"
   val couchDbScalaVersion: String = "0.7.0"
-  val json4sVersion: String = "3.3.0"
 
   Seq(
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
@@ -35,9 +34,7 @@ libraryDependencies ++= {
     "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
     "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
     "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % jacksonVersion,
-    "com.ibm"           %% "couchdb-scala" % couchDbScalaVersion,
-    "org.json4s"        %% "json4s-native" % json4sVersion,
-    "org.json4s"        %% "json4s-jackson" % json4sVersion
+    "com.ibm"           %% "couchdb-scala" % couchDbScalaVersion
   )
 }
 

@@ -11,23 +11,16 @@ import com.leagueprojecto.api.services.riot.MatchService._
 object MatchService {
 
   sealed trait State
-
   case object Idle extends State
-
   case object WaitingForRiotResponse extends State
-
   case object RiotRequestFinished extends State
 
   sealed trait Data
-
   case object Empty extends Data
-
-  case class RequestData(origin: ActorRef, matchId: Long, summerId: Long) extends Data
+  case class RequestData(origin: ActorRef, summonerId: Long, matchId: Long) extends Data
 
   case class GetMatch(regionParam: String, summonerId: Long, matchId: Long)
-
   case class MatchRetrievalFailed(matchId: Long) extends Exception
-
   case class Result(riotMatch: MatchDetail)
 
   def props = Props(new MatchService)
@@ -40,15 +33,13 @@ class MatchService extends FSM[State, Data] with ActorLogging with RiotService {
   when(Idle) {
     case Event(GetMatch(regionParam, summonerId, matchId), Empty) =>
       val origSender: ActorRef = sender()
-
-      val matchEndpoint: Uri = endpoint(regionParam, matchById + matchId)
-      riotRequest(RequestBuilding.Get(matchEndpoint)).pipeTo(self)
+      riotGetRequest(regionParam, matchById + matchId).pipeTo(self)
 
       goto(WaitingForRiotResponse) using RequestData(origSender, summonerId, matchId)
   }
 
   when(WaitingForRiotResponse) {
-    case Event(msg@HttpResponse(StatusCodes.OK, _, entity, _), data: RequestData) =>
+    case Event(HttpResponse(StatusCodes.OK, _, entity, _), data: RequestData) =>
       mapRiotTo(entity, classOf[RiotMatch]).pipeTo(self)
       goto(RiotRequestFinished) using data
     case Event(x, RequestData(origSender, _, matchId)) =>
