@@ -13,5 +13,6 @@ trait JsonProtocols extends DefaultJsonProtocol {
   implicit val matchDetailFormat = jsonFormat12(MatchDetail.apply)
   implicit val matchFormat = jsonFormat(Match, "timestamp", "champion", "region", "queue", "season", "matchId", "role", "platformId", "lane")
   implicit val championFormat = jsonFormat5(Champion.apply)
+  implicit val championListFormat = jsonFormat3(ChampionList.apply)
   implicit val championsResponseFormat = jsonFormat1(ChampionsResponse.apply)
 }

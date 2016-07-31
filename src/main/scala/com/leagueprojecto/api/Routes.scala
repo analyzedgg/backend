@@ -61,7 +61,7 @@ trait Routes extends JsonProtocols {
           complete {
             val championManager = createChampionActor
             val future = championManager ? GetChampions(region)
-            future.mapTo[ChampionService.ChampionsResponse].map(_.data)
+            future.mapTo[ChampionService.ChampionsResponse].map(_.championList)
           }
         } ~ optionsSupport
       }

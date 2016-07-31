@@ -6,14 +6,14 @@ import akka.http.scaladsl.model.{HttpResponse, Uri}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import com.leagueprojecto.api.JsonProtocols
-import com.leagueprojecto.api.domain.Champion
-import com.leagueprojecto.api.services.riot.ChampionService.{GetChampions, ChampionsResponse}
+import com.leagueprojecto.api.domain.ChampionList
+import com.leagueprojecto.api.services.riot.ChampionService.{ChampionsResponse, GetChampions}
 import spray.json._
 
 object ChampionService {
 
   case class GetChampions(region: String)
-  case class ChampionsResponse(data: Map[String, Champion])
+  case class ChampionsResponse(championList: ChampionList)
 
   def props = Props[ChampionService]
 }
@@ -33,8 +33,11 @@ class ChampionService extends Actor with ActorLogging with RiotService with Json
     case HttpResponse(OK, _, entity, _) =>
       Unmarshal(entity).to[String].onSuccess {
         case result: String =>
-          val championList = transform(result.parseJson.asJsObject)
-          origSender ! championList
+          log.debug(s"recieved champion string: $result")
+          val championList = transform(result.parseJson.asJsObject())
+
+          log.debug(s"returing to the original sender: $championList")
+          origSender ! ChampionsResponse(championList)
       }
   }
 
@@ -43,7 +46,8 @@ class ChampionService extends Actor with ActorLogging with RiotService with Json
       log.error(s"GetSummonerByName request failed for reason: $e")
   }
 
-  private def transform(riotResult: JsObject): ChampionsResponse = {
-    riotResult.convertTo[ChampionsResponse]
+  private def transform(riotResult: JsObject): ChampionList = {
+    log.debug(s"In the transform with: $riotResult")
+    riotResult.convertTo[ChampionList]
   }
 }
