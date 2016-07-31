@@ -3,6 +3,7 @@ package com.leagueprojecto.api.services
 import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import akka.pattern.CircuitBreaker
 import com.leagueprojecto.api.domain.MatchDetail
+import com.leagueprojecto.api.domain.riot.RiotRecentMatches
 import com.leagueprojecto.api.services.MatchHistoryManager.{State, StateData}
 import com.leagueprojecto.api.services.couchdb.DatabaseService
 import com.leagueprojecto.api.services.couchdb.DatabaseService.{MatchesResult, MatchesSaved, NoResult, SaveMatches}
@@ -11,6 +12,7 @@ import com.leagueprojecto.api.services.riot.RecentMatchesService
 import scala.concurrent.duration._
 
 object MatchHistoryManager {
+
   sealed trait State
   case object Idle extends State
   case object RetrievingRecentMatchIdsFromRiot extends State
@@ -21,6 +23,7 @@ object MatchHistoryManager {
   case class GetMatches(region: String, summonerId: Long, queueType: String, championList: String)
 
   case class RequestData(sender: ActorRef, getMatches: GetMatches)
+
   case class StateData(requestData: Option[RequestData], matches: Map[Long, Option[MatchDetail]])
 
   case class Result(data: Seq[MatchDetail])
@@ -72,7 +75,7 @@ class MatchHistoryManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[Sta
   }
 
   when(RetrievingFromRiot) {
-    case Event(MatchCombiner.Result(matchDetails), StateData(Some(RequestData(sender, msg @ GetMatches(region, summonerId, _, _))), matches)) =>
+    case Event(MatchCombiner.Result(matchDetails), StateData(Some(RequestData(sender, msg@GetMatches(region, summonerId, _, _))), matches)) =>
 
       // Insert the new matchDetails into the database
       dbService ! SaveMatches(region, summonerId, matchDetails)

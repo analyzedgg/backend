@@ -4,6 +4,7 @@ import akka.actor.FSM.StateTimeout
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{TestActor, TestProbe}
 import com.leagueprojecto.api.domain._
+import com.leagueprojecto.api.domain.riot.Player
 import com.leagueprojecto.api.services.riot.MatchService
 import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 

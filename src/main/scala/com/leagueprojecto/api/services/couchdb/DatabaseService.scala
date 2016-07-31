@@ -2,7 +2,6 @@ package com.leagueprojecto.api.services.couchdb
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.pattern.{CircuitBreaker, CircuitBreakerOpenException}
-
 import com.ibm.couchdb.Res.Error
 import com.ibm.couchdb.{CouchDb, CouchException, TypeMapping}
 import com.leagueprojecto.api.domain.{MatchDetail, Summoner}
