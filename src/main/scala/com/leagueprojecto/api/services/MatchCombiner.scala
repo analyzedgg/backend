@@ -33,7 +33,7 @@ class MatchCombiner extends FSM[State, StateData] with ActorLogging {
   }
 
   when(GettingMatches, stateTimeout = 5 seconds) {
-    case Event(MatchService.Result(matchDetail), state @ StateData(sender, matches)) =>
+    case Event(MatchService.Result(matchDetail: MatchDetail), state @ StateData(sender, matches)) =>
 
       val newMatches = matches + (matchDetail.matchId -> Some(matchDetail))
 

@@ -21,20 +21,16 @@ import scala.concurrent.duration._
 
 trait Routes extends JsonProtocols {
   implicit val system: ActorSystem
-
   implicit def executor: ExecutionContextExecutor
-
   implicit val timeout: Timeout = Timeout(1.minute)
 
   lazy val couchDbCircuitBreaker =
     new CircuitBreaker(system.scheduler, maxFailures = 5, callTimeout = 5.seconds, resetTimeout = 1.minute)(executor)
 
   def config: Config
-
   val logger: LoggingAdapter
 
   def regionMatcher = config.getString("riot.regions").r
-
   def queueMatcher = config.getString("riot.queueTypes")
 
   val optionsSupport = {
@@ -44,10 +40,10 @@ trait Routes extends JsonProtocols {
   }
 
   implicit def myExceptionHandler = ExceptionHandler {
-    case e: RiotService.ServiceNotAvailable => complete(HttpResponse(ServiceUnavailable))
-    case e: RiotService.TooManyRequests => complete(HttpResponse(TooManyRequests))
-    case e: SummonerService.SummonerNotFound => complete(HttpResponse(NotFound))
-    case _ => complete(HttpResponse(InternalServerError))
+    case e: RiotService.ServiceNotAvailable   => complete(HttpResponse(ServiceUnavailable))
+    case e: RiotService.TooManyRequests       => complete(HttpResponse(TooManyRequests))
+    case SummonerService.SummonerNotFound  => complete(HttpResponse(NotFound))
+    case _                                    => complete(HttpResponse(InternalServerError))
   }
 
   val corsHeaders = List(RawHeader("Access-Control-Allow-Origin", "*"),

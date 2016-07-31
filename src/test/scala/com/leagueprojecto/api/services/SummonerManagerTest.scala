@@ -50,7 +50,7 @@ class SummonerManagerTest extends FlatSpec with Matchers with GivenWhenThen {
   riotProbe.setAutoPilot(new TestActor.AutoPilot {
     def run(sender: ActorRef, msg: Any): TestActor.AutoPilot = {
       msg match {
-        case SummonerService.GetSummonerByName(_, "No db nor riot") => sender ! SummonerService.SummonerNotFound("Fail")
+        case SummonerService.GetSummonerByName(_, "No db nor riot") => sender ! SummonerService.SummonerNotFound
         case SummonerService.GetSummonerByName(_, _) => sender ! SummonerService.Result(testSummoner)
       }
       TestActor.KeepRunning

@@ -2,6 +2,7 @@ package com.leagueprojecto.api.routes
 
 import akka.actor.ActorRef
 import akka.actor.Status.Failure
+import com.leagueprojecto.api.domain.riot.Player
 // Do not remove the following import. IntelliJ might say it's not used, but it is for converting json to case classes.
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.ContentTypes._
@@ -35,7 +36,7 @@ class MatchHistoryRoute extends RoutesTest {
           case GetMatches(_, 123456789, _, _) =>
             sender ! MatchHistoryManager.Result(validHistoryList)
           case GetMatches(_, 987654321, _, _) =>
-            sender ! Failure(new SummonerNotFound(""))
+            sender ! Failure(SummonerNotFound)
         }
         TestActor.KeepRunning
       }

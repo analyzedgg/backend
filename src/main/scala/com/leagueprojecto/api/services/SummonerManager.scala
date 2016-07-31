@@ -49,7 +49,7 @@ class SummonerManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[State, 
     case Event(SummonerService.Result(summoner), (Some(RequestData(sender, _)), _)) =>
       sender ! Result(summoner)
       goto(PersistingToDb) using stateData.copy(_2 = Some(summoner))
-    case Event(notFound: SummonerService.SummonerNotFound, (Some(RequestData(sender, _)), _)) =>
+    case Event(notFound @ SummonerService.SummonerNotFound, (Some(RequestData(sender, _)), _)) =>
       sender ! Failure(notFound)
       stop()
     case Event(failure: Failure, (Some(RequestData(sender, _)), _)) =>

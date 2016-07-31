@@ -1,8 +1,8 @@
 package com.leagueprojecto.api.domain
 
 case class PlayerStats(
-                        minionKills: Int,
-                        kills: Int,
-                        deaths: Int,
-                        assists: Int
+                        minionKills: Long,
+                        kills: Long,
+                        deaths: Long,
+                        assists: Long
                         )
