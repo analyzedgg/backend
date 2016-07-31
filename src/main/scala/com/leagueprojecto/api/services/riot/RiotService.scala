@@ -60,14 +60,9 @@ trait RiotService {
   }
 
   protected def mapRiotTo[R](response: ResponseEntity, responseClass: Class[R]): Future[R] = {
-
-    val mappedResult: Future[String] = for {
-      responseString: String <- Unmarshal(response).to[String]
-    } yield responseString
-
-    mappedResult.map { jsonString =>
-      log.debug(s"Got json string $jsonString")
-      objectMapper.readValue(jsonString, responseClass)
+    Unmarshal(response).to[String].map { mappedResult =>
+      log.debug(s"Got json string $mappedResult")
+      objectMapper.readValue(mappedResult, responseClass)
     }
   }
 

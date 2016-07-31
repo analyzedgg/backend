@@ -8,7 +8,6 @@ case class RiotMatch(
                       participantIdentities: Seq[ParticipantIdentity],
                       participants: Seq[Participant],
                       matchVersion: String
-                      //teams: Seq[Team]  //We don't use any data from Team right now
                     )
 
 case class Participant(
@@ -33,10 +32,6 @@ case class ParticipantTimeline(
                                 role: String,
                                 lane: String
                               )
-
-/*case class Team(
-                 teamId: Long
-               )*/
 
 case class ParticipantStats(
                              assists: Long,
