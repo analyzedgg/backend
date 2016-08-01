@@ -18,7 +18,7 @@ class MatchServiceSpec(_system: ActorSystem) extends BaseServiceHelper(_system) 
   "MatchService" should {
     "return a Result containing a List of MatchHistorys" in {
       Given("a valid response")
-      val json = readFileFromClasspath("responses/match/happyflow.json")
+      val json = readFileFromClasspath("/responses/match/happyflow.json")
       val response = HttpResponse(status = OK, entity = json)
 
       createActorAndSendMessage(response)
