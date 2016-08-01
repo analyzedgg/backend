@@ -52,6 +52,7 @@ class MatchServiceSpec(_system: ActorSystem) extends BaseServiceHelper(_system) 
   }
 
   class MockedMatchService(httpResponse: HttpResponse) extends MatchService {
-    override def riotRequest(httpRequest: HttpRequest, hostType: String = "api"): Future[HttpResponse] = Future(httpResponse)
+    override def riotGetRequest(regionParam: String, serviceName: String, queryParams: Map[String, String] = Map.empty,
+                                prefix: String = "api/lol", hostType: String = "api") = Future(httpResponse)
   }
 }

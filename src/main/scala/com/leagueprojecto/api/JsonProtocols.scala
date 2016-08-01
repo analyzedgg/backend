@@ -5,6 +5,8 @@ import com.leagueprojecto.api.domain.riot._
 import com.leagueprojecto.api.services.riot.ChampionService.ChampionsResponse
 import spray.json._
 
+import scala.concurrent.Future
+
 trait JsonProtocols extends DefaultJsonProtocol {
   //shared
   implicit val playerFormat = jsonFormat2(Player.apply)

@@ -112,8 +112,8 @@ trait Routes extends JsonProtocols {
     }
   }
 
-  private[this] def createChampionActor: ActorRef = system.actorOf(ChampionService.props)
-  private[this] def createSummonerActor: ActorRef = system.actorOf(SummonerManager.props(couchDbCircuitBreaker))
-  private[this] def createMatchHistoryActor: ActorRef = system.actorOf(MatchHistoryManager.props(couchDbCircuitBreaker))
+  protected[Routes] def createChampionActor: ActorRef = system.actorOf(ChampionService.props)
+  protected[Routes] def createSummonerActor: ActorRef = system.actorOf(SummonerManager.props(couchDbCircuitBreaker))
+  protected[Routes] def createMatchHistoryActor: ActorRef = system.actorOf(MatchHistoryManager.props(couchDbCircuitBreaker))
 
 }
