@@ -34,7 +34,7 @@ class RecentMatchesService extends FSM[State, Data] with RiotService with ActorL
 
       val queryParams: Map[String, String] = Map("beginIndex" -> (0 toString), "endIndex" -> (amount toString))
 
-      riotGetRequest(regionParam, matchlistBySummonerId + summonerId, queryParams).pipeTo(self)
+      riotGetRequest(regionParam, matchListBySummonerId + summonerId, queryParams).pipeTo(self)
       goto(WaitingForRiotResponse) using RequestData(origSender, summonerId)
   }
 

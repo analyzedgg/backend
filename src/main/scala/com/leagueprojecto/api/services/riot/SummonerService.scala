@@ -3,8 +3,8 @@ package com.leagueprojecto.api.services.riot
 import akka.pattern.pipe
 import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import akka.http.scaladsl.model._
-import com.leagueprojecto.api.JsonProtocols
 import com.leagueprojecto.api.domain.Summoner
+import com.leagueprojecto.api.domain.riot.RiotSummoner
 import com.leagueprojecto.api.services.riot.SummonerService._
 
 object SummonerService {
@@ -24,7 +24,7 @@ object SummonerService {
   def props = Props(new SummonerService)
 }
 
-class SummonerService extends FSM[State, Data] with ActorLogging with RiotService with JsonProtocols {
+class SummonerService extends FSM[State, Data] with ActorLogging with RiotService {
 
   startWith(Idle, Empty)
 
@@ -38,7 +38,7 @@ class SummonerService extends FSM[State, Data] with ActorLogging with RiotServic
 
   when(WaitingForRiotResponse) {
     case Event(HttpResponse(StatusCodes.OK, _, entity, _), data: RequestData) =>
-      mapRiotTo(entity, classOf[Summoner]).pipeTo(self)
+      mapRiotTo(entity, classOf[RiotSummoner]).pipeTo(self)
       goto(RiotRequestFinished) using data
     case Event(x, RequestData(origSender, region, name)) =>
       log.warning(s"No summoner found by name $name in region '$region'")
@@ -50,9 +50,9 @@ class SummonerService extends FSM[State, Data] with ActorLogging with RiotServic
   }
 
   when(RiotRequestFinished) {
-    case Event(summoner: Summoner, RequestData(origSender, region, name)) =>
-      log.debug(s"Got summoner back by name $name from region $region: $summoner")
-      origSender ! Result(summoner)
+    case Event(riotSummoner: RiotSummoner, RequestData(origSender, region, name)) =>
+      log.debug(s"Got summoner back by name $name from region $region: $riotSummoner")
+      origSender ! Result(riotSummoner.summoner)
       stop()
   }
 }

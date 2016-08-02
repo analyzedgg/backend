@@ -21,7 +21,7 @@ object MatchService {
 
   case class GetMatch(regionParam: String, summonerId: Long, matchId: Long)
   case class MatchRetrievalFailed(matchId: Long) extends Exception
-  case class Result(riotMatch: MatchDetail)
+  case class Result(matchDetail: MatchDetail)
 
   def props = Props(new MatchService)
 }
@@ -107,7 +107,7 @@ class MatchService extends FSM[State, Data] with ActorLogging with RiotService {
   }
 
   private[this] def toPlayerStats(stats: ParticipantStats): PlayerStats = {
-    PlayerStats(stats.minionsKilled, stats.kills, stats.assists, stats.deaths)
+    PlayerStats(stats.minionsKilled, stats.kills, stats.deaths, stats.assists)
   }
 }
 

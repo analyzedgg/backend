@@ -11,9 +11,10 @@ import akka.pattern.{CircuitBreaker, ask}
 import akka.util.Timeout
 import com.leagueprojecto.api.services.{MatchHistoryManager, SummonerManager}
 import com.leagueprojecto.api.services.SummonerManager.GetSummoner
-import com.leagueprojecto.api.services.riot.{RiotService, SummonerService}
+import com.leagueprojecto.api.services.riot.{ChampionService, RiotService, SummonerService}
 import com.typesafe.config.Config
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import com.leagueprojecto.api.services.riot.ChampionService.GetChampions
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
@@ -49,6 +50,20 @@ trait Routes extends JsonProtocols {
     RawHeader("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS, DELETE"),
     RawHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization"))
 
+  def championsRoute(implicit region: String) = {
+    pathPrefix("champions") {
+      pathEndOrSingleSlash {
+        get {
+          complete {
+            val championManager = createChampionActor
+            val future = championManager ? GetChampions(region)
+            future.mapTo[ChampionService.ChampionsResponse].map(_.championList)
+          }
+        } ~ optionsSupport
+      }
+    }
+  }
+
   def summonerRoute(implicit region: String) = {
     pathPrefix("summoner" / Segment) { name =>
       pathEndOrSingleSlash {
@@ -63,7 +78,7 @@ trait Routes extends JsonProtocols {
     }
   }
 
-  def matchhistoryRoute(implicit region: String) = {
+  def matchHistoryRoute(implicit region: String) = {
     pathPrefix("matchhistory" / LongNumber) { summonerId =>
       parameters("queue" ? "", "champions" ? "") { (queueParam: String, championParam: String) =>
         var queueType = queueParam
@@ -92,15 +107,13 @@ trait Routes extends JsonProtocols {
       pathPrefix("api" / regionMatcher) { regionSegment =>
         implicit val region = regionSegment.toLowerCase
 
-        summonerRoute ~ matchhistoryRoute
+        championsRoute ~ summonerRoute ~ matchHistoryRoute
       }
     }
   }
 
-  def createSummonerActor: ActorRef =
-    system.actorOf(SummonerManager.props(couchDbCircuitBreaker))
+  protected[Routes] def createChampionActor: ActorRef = system.actorOf(ChampionService.props)
+  protected[Routes] def createSummonerActor: ActorRef = system.actorOf(SummonerManager.props(couchDbCircuitBreaker))
+  protected[Routes] def createMatchHistoryActor: ActorRef = system.actorOf(MatchHistoryManager.props(couchDbCircuitBreaker))
 
-  def createMatchHistoryActor: ActorRef = {
-    system.actorOf(MatchHistoryManager.props(couchDbCircuitBreaker))
-  }
 }

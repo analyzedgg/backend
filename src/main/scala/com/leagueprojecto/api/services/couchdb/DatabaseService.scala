@@ -6,6 +6,7 @@ import com.ibm.couchdb.Res.Error
 import com.ibm.couchdb.{CouchDb, CouchException, TypeMapping}
 import com.leagueprojecto.api.domain.{MatchDetail, Summoner}
 import org.http4s.Status.NotFound
+import com.leagueprojecto.api.services.couchdb.DatabaseService._
 
 import scala.util.{Failure, Success, Try}
 import scalaz.{-\/, \/, \/-}
@@ -28,8 +29,6 @@ object DatabaseService {
 }
 
 class DatabaseService(couchDbCircuitBreaker: CircuitBreaker) extends Actor with ActorLogging {
-
-  import DatabaseService._
 
   private val config = context.system.settings.config
 
