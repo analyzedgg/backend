@@ -28,6 +28,7 @@ libraryDependencies ++= {
     "io.kamon" %% "kamon-akka" % kamonVersion,
     "io.kamon" %% "kamon-log-reporter" % kamonVersion,
     "io.kamon" %% "kamon-statsd" % kamonVersion,
+    "io.kamon" %% "kamon-autoweave" % kamonVersion,
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-remote" % akkaVersion,
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
@@ -45,9 +46,6 @@ libraryDependencies ++= {
     "com.ibm"           %% "couchdb-scala" % couchDbScalaVersion
   )
 }
-aspectjSettings
-
-fork in run := true
 
 // Create a new MergeStrategy for aop.xml files
 val aopMerge = new sbtassembly.MergeStrategy {
@@ -103,9 +101,7 @@ val customMergeStrategy: String => sbtassembly.MergeStrategy = {
     defaultMergeStrategy(s)
 }
 
-// Use the customMergeStrategy in your settings
-assemblyMergeStrategy in assembly := customMergeStrategy
-
-javaOptions in run <++= AspectjKeys.weaverOptions in Aspectj
+// when you call "sbt run" aspectj weaving kicks in
+fork in run := true
 
 mainClass in(Compile, run) := Some("com.leagueprojecto.api.Startup")
