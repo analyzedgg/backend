@@ -9,7 +9,6 @@ import akka.testkit.{TestProbe, TestActor}
 import com.leagueprojecto.api.domain.Summoner
 import com.leagueprojecto.api.services.SummonerManager
 import com.leagueprojecto.api.services.SummonerManager.GetSummoner
-import com.leagueprojecto.api.services.riot.SummonerService
 import com.leagueprojecto.api.services.riot.SummonerService.SummonerNotFound
 
 class SummonerRoute extends RoutesTest {
@@ -23,7 +22,7 @@ class SummonerRoute extends RoutesTest {
           case GetSummoner(_, validSummoner.name) =>
             sender ! SummonerManager.Result(validSummoner)
           case GetSummoner(_, "NotExistingSummoner") =>
-            sender ! Failure(new SummonerNotFound(""))
+            sender ! Failure(SummonerNotFound)
         }
         TestActor.KeepRunning
       }

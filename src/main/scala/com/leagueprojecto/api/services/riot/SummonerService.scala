@@ -1,59 +1,58 @@
 package com.leagueprojecto.api.services.riot
 
-import akka.actor.{ActorLogging, ActorRef, Props, Actor}
-import akka.http.scaladsl.client.RequestBuilding
+import akka.pattern.pipe
+import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import com.leagueprojecto.api.JsonProtocols
 import com.leagueprojecto.api.domain.Summoner
-import spray.json._
+import com.leagueprojecto.api.domain.riot.RiotSummoner
+import com.leagueprojecto.api.services.riot.SummonerService._
 
 object SummonerService {
+  sealed trait State
+  case object Idle extends State
+  case object WaitingForRiotResponse extends State
+  case object RiotRequestFinished extends State
+
+  sealed trait Data
+  case object Empty extends Data
+  case class RequestData(origin: ActorRef, region: String, name: String) extends Data
+
   case class GetSummonerByName(region: String, name: String)
-  case class SummonerNotFound(message: String) extends Exception
+  case object SummonerNotFound extends Exception
   case class Result(summoner: Summoner)
 
   def props = Props(new SummonerService)
 }
 
-class SummonerService extends Actor with ActorLogging with RiotService with JsonProtocols {
-  import SummonerService._
+class SummonerService extends FSM[State, Data] with ActorLogging with RiotService {
 
-  override def receive: Receive = {
-    case GetSummonerByName(regionParam: String, name: String) =>
+  startWith(Idle, Empty)
+
+  when(Idle) {
+    case Event(GetSummonerByName(regionParam: String, name: String), Empty) =>
       val origSender: ActorRef = sender()
 
-      val summonerEndpoint: Uri = endpoint(regionParam, summonerByName + name)
-
-      val future = riotRequest(RequestBuilding.Get(summonerEndpoint))
-      future onSuccess successHandler(origSender).orElse(defaultSuccessHandler(origSender))
-      future onFailure failureHandler(origSender)
+      riotGetRequest(regionParam, summonerByName + name).pipeTo(self)
+      goto(WaitingForRiotResponse) using RequestData(origSender, regionParam, name)
   }
 
-  def successHandler(origSender: ActorRef): PartialFunction[HttpResponse, Unit] = {
-    case HttpResponse(OK, _, entity, _) =>
-      Unmarshal(entity).to[String].onSuccess {
-        case result: String =>
-          val summoner = transform(result.parseJson.asJsObject)
-          println(s"summoner found! $summoner")
-          origSender ! Result(summoner)
-      }
-
-    case HttpResponse(NotFound, _, _, _) =>
-      val message = s"No summoner found by service '$service' for region '$region'"
-      log.warning(message)
-      origSender ! SummonerNotFound(message)
+  when(WaitingForRiotResponse) {
+    case Event(HttpResponse(StatusCodes.OK, _, entity, _), data: RequestData) =>
+      mapRiotTo(entity, classOf[RiotSummoner]).pipeTo(self)
+      goto(RiotRequestFinished) using data
+    case Event(x, RequestData(origSender, region, name)) =>
+      log.warning(s"No summoner found by name $name in region '$region'")
+      origSender ! SummonerNotFound
+      stop()
+    case Event(x, _) =>
+      log.error(s"Something went wrong retrieving matches: $x")
+      stop()
   }
 
-  def failureHandler(origSender: ActorRef): PartialFunction[Throwable, Unit] = {
-    case e: Exception =>
-      log.error(s"request failed for some reason: ${e.getMessage}")
-      e.printStackTrace()
-  }
-
-  private def transform(riotResult: JsObject): Summoner = {
-    val firstKey = riotResult.fields.keys.head
-    riotResult.fields.get(firstKey).get.convertTo[Summoner]
+  when(RiotRequestFinished) {
+    case Event(riotSummoner: RiotSummoner, RequestData(origSender, region, name)) =>
+      log.debug(s"Got summoner back by name $name from region $region: $riotSummoner")
+      origSender ! Result(riotSummoner.summoner)
+      stop()
   }
 }

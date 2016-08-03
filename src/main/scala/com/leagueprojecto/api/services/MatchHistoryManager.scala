@@ -1,14 +1,18 @@
 package com.leagueprojecto.api.services
 
-import akka.actor.{ActorLogging, FSM, ActorRef, Props}
+import akka.actor.{ActorLogging, ActorRef, FSM, Props}
+import akka.pattern.CircuitBreaker
 import com.leagueprojecto.api.domain.MatchDetail
-import com.leagueprojecto.api.services.MatchHistoryManager.{StateData, State}
+import com.leagueprojecto.api.domain.riot.RiotRecentMatches
+import com.leagueprojecto.api.services.MatchHistoryManager.{State, StateData}
 import com.leagueprojecto.api.services.couchdb.DatabaseService
-import com.leagueprojecto.api.services.couchdb.DatabaseService.{MatchesResult, MatchesSaved, SaveMatches}
+import com.leagueprojecto.api.services.couchdb.DatabaseService.{MatchesResult, MatchesSaved, NoResult, SaveMatches}
 import com.leagueprojecto.api.services.riot.RecentMatchesService
+
 import scala.concurrent.duration._
 
 object MatchHistoryManager {
+
   sealed trait State
   case object Idle extends State
   case object RetrievingRecentMatchIdsFromRiot extends State
@@ -19,18 +23,19 @@ object MatchHistoryManager {
   case class GetMatches(region: String, summonerId: Long, queueType: String, championList: String)
 
   case class RequestData(sender: ActorRef, getMatches: GetMatches)
+
   case class StateData(requestData: Option[RequestData], matches: Map[Long, Option[MatchDetail]])
 
   case class Result(data: Seq[MatchDetail])
 
-  def props = Props[MatchHistoryManager]
+  def props(couchDbCircuitBreaker: CircuitBreaker) = Props(new MatchHistoryManager(couchDbCircuitBreaker))
 }
 
-class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
+class MatchHistoryManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[State, StateData] with ActorLogging {
 
   import MatchHistoryManager._
 
-  val dbService = context.actorOf(DatabaseService.props, "dbService")
+  val dbService = context.actorOf(DatabaseService.props(couchDbCircuitBreaker), "dbService")
 
   startWith(Idle, StateData(None, Map.empty))
 
@@ -43,12 +48,12 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
     case Event(RecentMatchesService.Result(matchIds), StateData(Some(RequestData(sender, _)), _)) if matchIds.isEmpty =>
       // In case there are no match ids, return an empty MatchHistory Seq back to the sender.
       sender ! Result(Seq.empty[MatchDetail])
+      log.debug("Returning matches from couchDB")
       stop()
     case Event(RecentMatchesService.Result(matchIds), state) =>
       // create the empty matchesMap which are to be filled by either the Db or Riot
       val matchesMap = matchIds.map(m => m -> None).toMap
       goto(RetrievingFromDb) using state.copy(matches = matchesMap)
-
 
     // todo: handle riot errors
   }
@@ -59,14 +64,18 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
 
       if (!hasEmptyValues(mergedMatches)) {
         sender ! Result(getValues(mergedMatches).sortBy(_.matchId))
+        log.debug("Returning matches from RIOT")
         stop()
       } else {
         goto(RetrievingFromRiot) using StateData(Some(RequestData(sender, msg)), mergedMatches)
       }
+
+    case Event(NoResult, StateData(Some(RequestData(sender, msg)), matches)) =>
+      goto(RetrievingFromRiot) using StateData(Some(RequestData(sender, msg)), matches)
   }
 
   when(RetrievingFromRiot) {
-    case Event(MatchCombiner.Result(matchDetails), StateData(Some(RequestData(sender, msg @ GetMatches(region, summonerId, _, _))), matches)) =>
+    case Event(MatchCombiner.Result(matchDetails), StateData(Some(RequestData(sender, msg@GetMatches(region, summonerId, _, _))), matches)) =>
 
       // Insert the new matchDetails into the database
       dbService ! SaveMatches(region, summonerId, matchDetails)
@@ -74,7 +83,7 @@ class MatchHistoryManager extends FSM[State, StateData] with ActorLogging {
       val mergedMatches = matches ++ matchDetails.map(m => m.matchId -> Some(m))
       val mergedMatchesSeq = mergedMatches.values.flatten.toSeq
       sender ! Result(mergedMatchesSeq.sortBy(_.matchId))
-
+      log.debug("Returning merged matches from RIOT")
       goto(PersistingToDb) using StateData(Some(RequestData(sender, msg)), mergedMatches)
 
     // todo: handle riot errors

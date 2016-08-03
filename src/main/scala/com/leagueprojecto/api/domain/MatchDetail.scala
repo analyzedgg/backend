@@ -3,10 +3,10 @@ package com.leagueprojecto.api.domain
 case class MatchDetail(
                         matchId: Long,
                         queueType: String,
-                        matchDuration: Int,
+                        matchDuration: Long,
                         matchCreation: Long,
                         summonerId: Long, // participantIdentities \ player \ summonerId
-                        championId: Int, // participants
+                        championId: Long, // participants
                         role: String, // participants \ timeline
                         lane: String, // participants \ timeline
                         winner: Boolean, // participants \ stats

@@ -1,132 +1,113 @@
 package com.leagueprojecto.api.services.riot
 
-import akka.actor.Status.Failure
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import akka.http.scaladsl.client.RequestBuilding
-import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes, Uri}
-import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.pattern.pipe
 import com.leagueprojecto.api.domain._
-import com.leagueprojecto.api.services.riot.SummonerService.SummonerNotFound
-import org.json4s.native.JsonMethods._
-import org.json4s._
-import org.json4s.native.Serialization
+import com.leagueprojecto.api.domain.riot._
+import com.leagueprojecto.api.services.riot.MatchService._
 
 object MatchService {
 
+  sealed trait State
+  case object Idle extends State
+  case object WaitingForRiotResponse extends State
+  case object RiotRequestFinished extends State
+
+  sealed trait Data
+  case object Empty extends Data
+  case class RequestData(origin: ActorRef, summonerId: Long, matchId: Long) extends Data
+
   case class GetMatch(regionParam: String, summonerId: Long, matchId: Long)
   case class MatchRetrievalFailed(matchId: Long) extends Exception
-
   case class Result(matchDetail: MatchDetail)
 
   def props = Props(new MatchService)
 }
 
-class MatchService extends Actor with ActorLogging with RiotService {
+class MatchService extends FSM[State, Data] with ActorLogging with RiotService {
 
-  import MatchService._
+  startWith(Idle, Empty)
 
-  override def receive: Receive = {
-    case GetMatch(regionParam, summonerId, matchId) =>
-      implicit val origSender: ActorRef = sender()
+  when(Idle) {
+    case Event(GetMatch(regionParam, summonerId, matchId), Empty) =>
+      val origSender: ActorRef = sender()
+      riotGetRequest(regionParam, matchById + matchId).pipeTo(self)
 
-      val matchEndpoint: Uri = endpoint(regionParam, matchById + matchId)
-
-      val future = riotRequest(RequestBuilding.Get(matchEndpoint))
-      future onSuccess successHandler(origSender, summonerId, matchId).orElse(defaultSuccessHandler(origSender))
-      future onFailure failureHandler
+      goto(WaitingForRiotResponse) using RequestData(origSender, summonerId, matchId)
   }
 
-  def successHandler(origSender: ActorRef, summonerId: Long, matchId: Long): PartialFunction[HttpResponse, Unit] = {
-    case HttpResponse(OK, _, entity, _) =>
-      Unmarshal(entity).to[String].onSuccess {
-        case result: String =>
-          val matchDetails = transform(result)
-          log.debug(s"got match back: $matchDetails")
-          val singleMatch: MatchDetail = matchDetails.filter(_.summonerId == summonerId).head
-          origSender ! Result(singleMatch)
-      }
-
-    case HttpResponse(StatusCodes.TooManyRequests, _, _, _) =>
-      log.warning("We're sending too many requests!")
+  when(WaitingForRiotResponse) {
+    case Event(HttpResponse(StatusCodes.OK, _, entity, _), data: RequestData) =>
+      mapRiotTo(entity, classOf[RiotMatch]).pipeTo(self)
+      goto(RiotRequestFinished) using data
+    case Event(x, RequestData(origSender, _, matchId)) =>
+      log.error(s"Something went wrong retrieving matches: $x")
       origSender ! MatchRetrievalFailed(matchId)
-
-    case HttpResponse(NotFound, _, _, _) =>
-      val message = s"No match found by service '$service' for region '$region'"
-      log.warning(message)
-      origSender ! MatchRetrievalFailed(matchId)
+      stop()
   }
 
-  def failureHandler: PartialFunction[Throwable, Unit] = {
-    case e: Exception =>
-      println(s"request failed for some reason: ${e.getMessage}")
-      e.printStackTrace()
+  // TODO: Now we filter the information of one person, but we could return all the user data to save in the db, would be more data on the frontend as counterpoint
+  when(RiotRequestFinished) {
+    case Event(matchDetails: RiotMatch, RequestData(origSender, summonerId, matchId)) =>
+      log.debug(s"Got match back: $matchDetails")
+
+      val responderMatch = toMatchDetail(matchDetails, summonerId)
+      log.debug(s"Got the match back for $summonerId: $responderMatch")
+      origSender ! Result(responderMatch)
+      stop()
   }
 
-  private def transform(riotResult: String): List[MatchDetail] = {
-    implicit val formats = Serialization.formats(NoTypeHints)
 
-    val matchObject = parse(riotResult)
+  private[this] def toMatchDetail(riotMatch: RiotMatch, summonerId: Long): MatchDetail = {
+    val participantIdentity = riotMatch.participantIdentities.filter(_.player.summonerId == summonerId).head
+    val participant = riotMatch.participants.filter(_.participantId == participantIdentity.participantId).head
 
-    val (matchId, queueType, matchDuration, matchCreation, matchVersion) = (
-      (matchObject \ "matchId").extract[Long],
-      (matchObject \ "queueType").extract[String],
-      (matchObject \ "matchDuration").extract[Int],
-      (matchObject \ "matchCreation").extract[Long],
-      (matchObject \ "matchVersion").extract[String]
-      )
+    val blue: Seq[Player] = getPlayersFromTeam(riotMatch.participants, riotMatch.participantIdentities, 100)
+    val red: Seq[Player] = getPlayersFromTeam(riotMatch.participants, riotMatch.participantIdentities, 200)
 
-    val participantIds = (matchObject \ "participantIdentities").children.map(pId =>
-      ((pId \ "participantId").extract[Int], (pId \ "player" \ "summonerId").extract[Long])
-    ).toMap
-
-    val blue: List[Player] = getPlayersFromTeam(matchObject, 100)
-    val red: List[Player] = getPlayersFromTeam(matchObject, 200)
-
-    (matchObject \ "participants").children.map(p => {
-      val (stats, timeline) = (p \ "stats", p \ "timeline")
-
-      MatchDetail(
-        matchId,
-        queueType,
-        matchDuration,
-        matchCreation,
-        participantIds((p \ "participantId").extract[Int]),
-        (p \ "championId").extract[Int],
-        (timeline \ "role").extract[String],
-        (timeline \ "lane").extract[String],
-        (stats \ "winner").extract[Boolean],
-        matchVersion,
-        PlayerStats(
-          (stats \ "minionsKilled").extract[Int],
-          (stats \ "kills").extract[Int],
-          (stats \ "deaths").extract[Int],
-          (stats \ "assists").extract[Int]
-        ),
-        Teams(Team(blue), Team(red))
-      )
-    })
+    MatchDetail(
+      riotMatch.matchId,
+      riotMatch.queueType,
+      riotMatch.matchDuration,
+      riotMatch.matchCreation,
+      participantIdentity.player.summonerId,
+      participant.championId,
+      participant.timeline.role,
+      participant.timeline.lane,
+      participant.stats.winner,
+      riotMatch.matchVersion,
+      toPlayerStats(participant.stats),
+      Teams(Team(blue), Team(red))
+    )
   }
 
-  private[this] def getPlayersFromTeam(matchObject: JValue, teamId: Int)(implicit formats: Formats): List[Player] = {
+  private[this] def getPlayersFromTeam(participants: Seq[Participant], participantIdentities: Seq[ParticipantIdentity], teamId: Int): Seq[Player] = {
     // Create a list of all participants in `teamId`
-    val participantIdsInTeam: List[Long] = (matchObject \ "participants").children.map(p =>
-      (p \ "participantId").extract[Long] -> (p \ "teamId").extract[Int]
+    val participantIdsInTeam: Seq[Long] = participants.map(p =>
+      p.participantId -> p.teamId
     ).filter(_._2 == teamId).map(_._1)
 
     // Get the id and name of all above summoners
-    (matchObject \ "participantIdentities").children.flatMap(pId => {
-      val participantId = (pId \ "participantId").extract[Long]
+    participantIdentities.flatMap(pId => {
+      val participantId = pId.participantId
 
       if (participantIdsInTeam.contains(participantId)) {
-        Some(Player(
-          (pId \ "player" \ "summonerId").extract[Long],
-          (pId \ "player" \ "summonerName").extract[String])
+        Some(
+          Player(
+            pId.player.summonerId,
+            pId.player.summonerName
+          )
         )
       } else {
         None
       }
     })
+  }
+
+  private[this] def toPlayerStats(stats: ParticipantStats): PlayerStats = {
+    PlayerStats(stats.minionsKilled, stats.kills, stats.deaths, stats.assists)
   }
 }
 

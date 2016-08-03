@@ -2,6 +2,7 @@ package com.leagueprojecto.api.services
 
 import akka.actor.Status.Failure
 import akka.actor.{ActorLogging, ActorRef, FSM, Props}
+import akka.pattern.CircuitBreaker
 import com.leagueprojecto.api.domain.Summoner
 import com.leagueprojecto.api.services.SummonerManager._
 import com.leagueprojecto.api.services.couchdb.DatabaseService
@@ -22,10 +23,10 @@ object SummonerManager {
 
   case class Result(summoner: Summoner)
 
-  def props = Props[SummonerManager]
+  def props(couchDbCircuitBreaker: CircuitBreaker) = Props(new SummonerManager(couchDbCircuitBreaker))
 }
 
-class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])] with ActorLogging {
+class SummonerManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[State, (Option[RequestData], Option[Summoner])] with ActorLogging {
 
   val dbService = createDatabaseServiceActor
 
@@ -40,7 +41,7 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
     case Event(DatabaseService.SummonerResult(summoner), (Some(RequestData(sender, _)), _)) =>
       sender ! Result(summoner)
       stop()
-    case Event(DatabaseService.NoSummonerFound, stateData) =>
+    case Event(DatabaseService.NoResult, stateData) =>
       goto(RetrievingFromRiot) using stateData
   }
 
@@ -48,7 +49,7 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
     case Event(SummonerService.Result(summoner), (Some(RequestData(sender, _)), _)) =>
       sender ! Result(summoner)
       goto(PersistingToDb) using stateData.copy(_2 = Some(summoner))
-    case Event(notFound: SummonerService.SummonerNotFound, (Some(RequestData(sender, _)), _)) =>
+    case Event(notFound @ SummonerService.SummonerNotFound, (Some(RequestData(sender, _)), _)) =>
       sender ! Failure(notFound)
       stop()
     case Event(failure: Failure, (Some(RequestData(sender, _)), _)) =>
@@ -97,7 +98,7 @@ class SummonerManager extends FSM[State, (Option[RequestData], Option[Summoner])
   }
 
   protected def createDatabaseServiceActor: ActorRef =
-    context.actorOf(DatabaseService.props)
+    context.actorOf(DatabaseService.props(couchDbCircuitBreaker))
 
   protected def createSummonerServiceActor: ActorRef =
     context.actorOf(SummonerService.props)

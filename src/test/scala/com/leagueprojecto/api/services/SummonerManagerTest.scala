@@ -2,25 +2,31 @@ package com.leagueprojecto.api.services
 
 import akka.actor.Status.Failure
 import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.pattern.CircuitBreaker
 import akka.testkit.{TestActor, TestProbe}
 import com.leagueprojecto.api.domain.Summoner
 import com.leagueprojecto.api.services.couchdb.DatabaseService
 import com.leagueprojecto.api.services.riot.SummonerService
 import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
+
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 
 class SummonerManagerTest extends FlatSpec with Matchers with GivenWhenThen {
   val system = ActorSystem.create()
+  val executor: ExecutionContextExecutor = system.dispatcher
   val dbProbe = new TestProbe(system)
   val riotProbe = new TestProbe(system)
 
+  lazy val couchDbCircuitBreaker =
+    new CircuitBreaker(system.scheduler, maxFailures = 5, callTimeout = 10.seconds, resetTimeout = 1.minute)(executor)
   val testRegion = "EUW"
   val testName = "Wagglez"
   val testNameNoDb = "No db"
   val testNameNoDbNorRiot = "No db nor riot"
   val testSummoner = Summoner(123123123, testName, 100, 1434315156000L, 30)
 
-  class TestSummonerManager extends SummonerManager {
+  class TestSummonerManager extends SummonerManager(couchDbCircuitBreaker) {
     override protected def createDatabaseServiceActor: ActorRef = dbProbe.ref
     override protected def createSummonerServiceActor: ActorRef = riotProbe.ref
   }
@@ -32,8 +38,8 @@ class SummonerManagerTest extends FlatSpec with Matchers with GivenWhenThen {
   dbProbe.setAutoPilot(new TestActor.AutoPilot {
     def run(sender: ActorRef, msg: Any): TestActor.AutoPilot = {
       msg match {
-        case DatabaseService.GetSummoner(_, "No db") => sender ! DatabaseService.NoSummonerFound
-        case DatabaseService.GetSummoner(_, "No db nor riot") => sender ! DatabaseService.NoSummonerFound
+        case DatabaseService.GetSummoner(_, "No db") => sender ! DatabaseService.NoResult
+        case DatabaseService.GetSummoner(_, "No db nor riot") => sender ! DatabaseService.NoResult
         case DatabaseService.GetSummoner(_, _) => sender ! DatabaseService.SummonerResult(testSummoner)
         case DatabaseService.SaveSummoner(_, _) => sender ! DatabaseService.SummonerSaved
       }
@@ -44,7 +50,7 @@ class SummonerManagerTest extends FlatSpec with Matchers with GivenWhenThen {
   riotProbe.setAutoPilot(new TestActor.AutoPilot {
     def run(sender: ActorRef, msg: Any): TestActor.AutoPilot = {
       msg match {
-        case SummonerService.GetSummonerByName(_, "No db nor riot") => sender ! SummonerService.SummonerNotFound("Fail")
+        case SummonerService.GetSummonerByName(_, "No db nor riot") => sender ! SummonerService.SummonerNotFound
         case SummonerService.GetSummonerByName(_, _) => sender ! SummonerService.Result(testSummoner)
       }
       TestActor.KeepRunning
