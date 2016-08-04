@@ -1,0 +1,227 @@
+{
+  "matches": [
+    {
+      "timestamp": 1468951179511,
+      "champion": 161,
+      "region": "EUW",
+      "queue": "RANKED_TEAM_5x5",
+      "season": "SEASON2016",
+      "matchId": 2762572150,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1468521064930,
+      "champion": 43,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2756105150,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1468343839425,
+      "champion": 43,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2753243748,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1467918230914,
+      "champion": 43,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2746544747,
+      "role": "DUO_SUPPORT",
+      "platformId": "EUW1",
+      "lane": "BOTTOM"
+    },
+    {
+      "timestamp": 1467565191855,
+      "champion": 43,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2740805064,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1466861737910,
+      "champion": 245,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2728102089,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "TOP"
+    },
+    {
+      "timestamp": 1466104695892,
+      "champion": 245,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2714882378,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1466102474520,
+      "champion": 134,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2714824744,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1465846740802,
+      "champion": 161,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2710219386,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1465843891732,
+      "champion": 245,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2710158458,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1465584149095,
+      "champion": 161,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2705445545,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1465413971961,
+      "champion": 161,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2702969652,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1465411211519,
+      "champion": 161,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2702899033,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1465327276124,
+      "champion": 161,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2701507252,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1465239464619,
+      "champion": 161,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2700043975,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1464982805502,
+      "champion": 245,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2695299512,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1464634760901,
+      "champion": 245,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2689592465,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1464632254329,
+      "champion": 134,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2689521365,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    },
+    {
+      "timestamp": 1464629165493,
+      "champion": 245,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2689427460,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "TOP"
+    },
+    {
+      "timestamp": 1464117690607,
+      "champion": 245,
+      "region": "EUW",
+      "queue": "TEAM_BUILDER_DRAFT_RANKED_5x5",
+      "season": "SEASON2016",
+      "matchId": 2680305605,
+      "role": "SOLO",
+      "platformId": "EUW1",
+      "lane": "MID"
+    }
+  ],
+  "totalGames": 302,
+  "startIndex": 0,
+  "endIndex": 20
+}

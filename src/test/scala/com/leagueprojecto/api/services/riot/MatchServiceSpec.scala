@@ -1,8 +1,8 @@
 package com.leagueprojecto.api.services.riot
 
-import akka.actor.{ActorSystem, Props}
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import com.leagueprojecto.api.services.riot.MatchService.{GetMatch, Result}
+import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.http.scaladsl.model.HttpResponse
+import com.leagueprojecto.api.services.riot.MatchService.{GetMatch, MatchRetrievalFailed, Result}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.testkit.TestProbe
 import com.leagueprojecto.api.testHelpers.BaseServiceHelper
@@ -11,12 +11,14 @@ import scala.concurrent.Future
 
 class MatchServiceSpec(_system: ActorSystem) extends BaseServiceHelper(_system) {
 
+  val matchId = 2614000573L
+
   val probe: TestProbe = TestProbe()
 
   def this() = this(ActorSystem("MatchServiceSpec"))
 
   "MatchService" should {
-    "return a Result containing a List of MatchHistorys" in {
+    "return a Result containing a List of MatchHistories" in {
       Given("a valid response")
       val json = readFileFromClasspath("/responses/match/happyFlow.json")
       val response = HttpResponse(status = OK, entity = json)
@@ -40,18 +42,33 @@ class MatchServiceSpec(_system: ActorSystem) extends BaseServiceHelper(_system) 
       matchDetail.stats.deaths shouldBe 7
       matchDetail.stats.assists shouldBe 9
     }
+    "return a MatchRetrievalFailed containing the failed match id" in {
+      Given("A bad response")
+      val response = HttpResponse(status = BadRequest)
 
+      val failingActor = createActorAndSendMessage(response)
+      val stopWatchProbe = TestProbe()
+      stopWatchProbe watch failingActor
+
+      Then("a MatchRetrievalFailed containing the match id object should be returned")
+      probe.expectMsg(MatchRetrievalFailed(matchId))
+
+      And("the actor should be stopped")
+      stopWatchProbe.expectTerminated(failingActor)
+    }
   }
 
-  def createActorAndSendMessage(response: HttpResponse): Unit = {
+  private[this] def createActorAndSendMessage(response: HttpResponse): ActorRef = {
     And("a SummonerService actor")
     val actorRef = system.actorOf(Props(new MockedMatchService(response)))
 
     When("summoner information is requested")
-    actorRef.tell(GetMatch("euw", 52477463, 2614000573L), probe.ref)
+    actorRef.tell(GetMatch("euw", 52477463, matchId), probe.ref)
+
+    actorRef
   }
 
-  class MockedMatchService(httpResponse: HttpResponse) extends MatchService {
+  private[this] class MockedMatchService(httpResponse: HttpResponse) extends MatchService {
     override def riotGetRequest(regionParam: String, serviceName: String, queryParams: Map[String, String] = Map.empty,
                                 prefix: String = "api/lol", hostType: String = "api") = Future(httpResponse)
   }

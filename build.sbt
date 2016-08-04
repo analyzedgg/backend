@@ -53,5 +53,6 @@ deployTask <<= assembly map { (asm) =>
 }
 
 mainClass in (Compile,run) := Some("com.leagueprojecto.api.Startup")
+coverageEnabled := true
 
 fork in run := true

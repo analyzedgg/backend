@@ -40,7 +40,7 @@ class SummonerService extends FSM[State, Data] with ActorLogging with RiotServic
     case Event(HttpResponse(StatusCodes.OK, _, entity, _), data: RequestData) =>
       mapRiotTo(entity, classOf[RiotSummoner]).pipeTo(self)
       goto(RiotRequestFinished) using data
-    case Event(x, RequestData(origSender, region, name)) =>
+    case Event(HttpResponse(StatusCodes.NotFound, _, _, _), RequestData(origSender, region, name)) =>
       log.warning(s"No summoner found by name $name in region '$region'")
       origSender ! SummonerNotFound
       stop()
