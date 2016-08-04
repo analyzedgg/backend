@@ -46,9 +46,8 @@ libraryDependencies ++= {
     "com.ibm"           %% "couchdb-scala" % couchDbScalaVersion
   )
 }
-
 // Create a new MergeStrategy for aop.xml files
-val aopMerge = new sbtassembly.MergeStrategy {
+val aopMerge: MergeStrategy = new MergeStrategy {
   val name = "aopMerge"
   import scala.xml._
   import scala.xml.dtd._
@@ -94,12 +93,15 @@ val defaultMergeStrategy: String => MergeStrategy = {
 
 // Use defaultMergeStrategy with a case for aop.xml
 // I like this better than the inline version mentioned in assembly's README
-val customMergeStrategy: String => sbtassembly.MergeStrategy = {
+val customMergeStrategy: String => MergeStrategy = {
   case PathList("META-INF", "aop.xml") =>
     aopMerge
   case s =>
     defaultMergeStrategy(s)
 }
+
+// Use the customMergeStrategy in your settings
+assemblyMergeStrategy in assembly := customMergeStrategy
 
 // when you call "sbt run" aspectj weaving kicks in
 fork in run := true
