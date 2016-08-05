@@ -1,3 +1,5 @@
+<a href='https://travis-ci.org/analyzedgg/backend'><img src='https://travis-ci.org/analyzedgg/backend.svg?branch=master' alt='Build Status'/></a><a href='https://coveralls.io/github/analyzedgg/backend?branch=test-all-the-things'><img src='https://coveralls.io/repos/github/analyzedgg/backend/badge.svg?branch=test-all-the-things' alt='Coverage Status' /></a>
+
 # League API
 This is the backend for the League API project.
 
