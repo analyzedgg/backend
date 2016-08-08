@@ -1,4 +1,4 @@
-package com.leagueprojecto.api.routes
+package com.leagueprojecto.api.testHelpers
 
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.testkit.ScalatestRouteTest
@@ -7,7 +7,7 @@ import com.leagueprojecto.api.Routes
 import com.typesafe.config.Config
 import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 
-abstract class RoutesTest extends FlatSpec with Matchers with GivenWhenThen with ScalatestRouteTest with Routes {
+abstract class RoutesHelper extends FlatSpec with Matchers with GivenWhenThen with ScalatestRouteTest with Routes {
   override def config: Config = testConfig
   override val logger: LoggingAdapter = system.log
 

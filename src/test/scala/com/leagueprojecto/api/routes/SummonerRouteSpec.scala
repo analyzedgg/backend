@@ -5,13 +5,14 @@ import akka.actor.Status.Failure
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model.StatusCodes._
-import akka.testkit.{TestProbe, TestActor}
+import akka.testkit.{TestActor, TestProbe}
 import com.leagueprojecto.api.domain.Summoner
 import com.leagueprojecto.api.services.SummonerManager
 import com.leagueprojecto.api.services.SummonerManager.GetSummoner
 import com.leagueprojecto.api.services.riot.SummonerService.SummonerNotFound
+import com.leagueprojecto.api.testHelpers.RoutesHelper
 
-class SummonerRoute extends RoutesTest {
+class SummonerRouteSpec extends RoutesHelper {
   val endpoint = "/api/euw/summoner"
   val validSummoner = Summoner(123, "Wagglez", 1, 1372782894000L, 30)
 

@@ -3,6 +3,7 @@ package com.leagueprojecto.api.routes
 import akka.actor.ActorRef
 import akka.actor.Status.Failure
 import com.leagueprojecto.api.domain.riot.Player
+import com.leagueprojecto.api.testHelpers.RoutesHelper
 // Do not remove the following import. IntelliJ might say it's not used, but it is for converting json to case classes.
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.ContentTypes._
@@ -13,7 +14,7 @@ import com.leagueprojecto.api.services.MatchHistoryManager
 import com.leagueprojecto.api.services.MatchHistoryManager.GetMatches
 import com.leagueprojecto.api.services.riot.SummonerService.SummonerNotFound
 
-class MatchHistoryRoute extends RoutesTest {
+class MatchHistoryRouteSpec extends RoutesHelper {
   val endpoint = "/api/euw/matchhistory"
 
   val validSummonerId = 123456789

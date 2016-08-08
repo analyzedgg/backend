@@ -12,7 +12,7 @@ import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._
 
-class SummonerManagerTest extends FlatSpec with Matchers with GivenWhenThen {
+class SummonerManagerSpec extends FlatSpec with Matchers with GivenWhenThen {
   val system = ActorSystem.create()
   val executor: ExecutionContextExecutor = system.dispatcher
   val dbProbe = new TestProbe(system)

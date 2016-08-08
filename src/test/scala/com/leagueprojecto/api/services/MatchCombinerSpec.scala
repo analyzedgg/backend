@@ -8,7 +8,7 @@ import com.leagueprojecto.api.domain.riot.Player
 import com.leagueprojecto.api.services.riot.MatchService
 import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 
-class MatchCombinerTest extends FlatSpec with Matchers with GivenWhenThen {
+class MatchCombinerSpec extends FlatSpec with Matchers with GivenWhenThen {
   val system = ActorSystem.create()
   val riotProbe = new TestProbe(system)
 
