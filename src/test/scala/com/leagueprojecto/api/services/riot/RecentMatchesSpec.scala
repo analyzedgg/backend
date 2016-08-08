@@ -43,7 +43,7 @@ class RecentMatchesSpec(_system: ActorSystem) extends BaseServiceHelper(_system)
 
   private[this] def createActorAndSendMessage(response: HttpResponse): ActorRef = {
     And("a RecentMatches actor")
-    val actorRef = system.actorOf(Props(new MockedMatchService(response)))
+    val actorRef = system.actorOf(Props(new MockedRecentMatchService(response)))
 
     When("recent matches are requested")
     actorRef.tell(GetRecentMatchIds("euw", 52477463, "1", "1", 20), probe.ref)
@@ -51,7 +51,7 @@ class RecentMatchesSpec(_system: ActorSystem) extends BaseServiceHelper(_system)
     actorRef
   }
 
-  private[this] class MockedMatchService(httpResponse: HttpResponse) extends RecentMatchesService {
+  private[this] class MockedRecentMatchService(httpResponse: HttpResponse) extends RecentMatchesService {
     override def riotGetRequest(regionParam: String, serviceName: String, queryParams: Map[String, String] = Map.empty,
                                 prefix: String = "api/lol", hostType: String = "api") = Future(httpResponse)
   }

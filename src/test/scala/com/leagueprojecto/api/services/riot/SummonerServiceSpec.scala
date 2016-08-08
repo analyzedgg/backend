@@ -61,7 +61,7 @@ class SummonerServiceSpec(_system: ActorSystem) extends BaseServiceHelper(_syste
 
   private[this] def createActorAndSendMessage(response: HttpResponse): ActorRef = {
     And("a RecentMatches actor")
-    val actorRef = system.actorOf(Props(new MockedMatchService(response)))
+    val actorRef = system.actorOf(Props(new MockedSummonerService(response)))
 
     When("recent matches are requested")
     actorRef.tell(GetSummonerByName("euw", "Wagglez"), probe.ref)
@@ -69,7 +69,7 @@ class SummonerServiceSpec(_system: ActorSystem) extends BaseServiceHelper(_syste
     actorRef
   }
 
-  private[this] class MockedMatchService(httpResponse: HttpResponse) extends SummonerService {
+  private[this] class MockedSummonerService(httpResponse: HttpResponse) extends SummonerService {
     override def riotGetRequest(regionParam: String, serviceName: String, queryParams: Map[String, String] = Map.empty,
                                 prefix: String = "api/lol", hostType: String = "api") = Future(httpResponse)
   }

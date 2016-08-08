@@ -48,7 +48,7 @@ class ChampionServiceSpec(_system: ActorSystem) extends BaseServiceHelper(_syste
 
   private[this] def createActorAndSendMessage(response: HttpResponse): ActorRef = {
     And("a ChampionService actor")
-    val actorRef = system.actorOf(Props(new MockedMatchService(response)))
+    val actorRef = system.actorOf(Props(new MockedChampionService(response)))
 
     When("champion information is requested")
     actorRef.tell(GetChampions("euw"), probe.ref)
@@ -56,7 +56,7 @@ class ChampionServiceSpec(_system: ActorSystem) extends BaseServiceHelper(_syste
     actorRef
   }
 
-  private[this] class MockedMatchService(httpResponse: HttpResponse) extends ChampionService {
+  private[this] class MockedChampionService(httpResponse: HttpResponse) extends ChampionService {
     override def riotGetRequest(regionParam: String, serviceName: String, queryParams: Map[String, String] = Map.empty,
                                 prefix: String = "api/lol", hostType: String = "api") = Future(httpResponse)
   }
