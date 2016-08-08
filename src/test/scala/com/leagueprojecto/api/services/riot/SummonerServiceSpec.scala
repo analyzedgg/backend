@@ -60,10 +60,10 @@ class SummonerServiceSpec(_system: ActorSystem) extends BaseServiceHelper(_syste
   }
 
   private[this] def createActorAndSendMessage(response: HttpResponse): ActorRef = {
-    And("a RecentMatches actor")
+    And("a SummonerService actor")
     val actorRef = system.actorOf(Props(new MockedSummonerService(response)))
 
-    When("recent matches are requested")
+    When("a summoner is requested")
     actorRef.tell(GetSummonerByName("euw", "Wagglez"), probe.ref)
 
     actorRef

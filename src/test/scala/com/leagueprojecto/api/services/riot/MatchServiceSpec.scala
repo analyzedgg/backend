@@ -59,10 +59,10 @@ class MatchServiceSpec(_system: ActorSystem) extends BaseServiceHelper(_system) 
   }
 
   private[this] def createActorAndSendMessage(response: HttpResponse): ActorRef = {
-    And("a SummonerService actor")
+    And("a MatchService actor")
     val actorRef = system.actorOf(Props(new MockedMatchService(response)))
 
-    When("summoner information is requested")
+    When("match information is requested")
     actorRef.tell(GetMatch("euw", 52477463, matchId), probe.ref)
 
     actorRef
