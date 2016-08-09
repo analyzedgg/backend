@@ -1,12 +1,12 @@
-//package com.leagueprojecto.api.services.riot
+//package com.analyzedgg.api.services.riot
 //
 //import akka.actor.Status.Failure
 //import akka.actor.{Props, ActorSystem}
 //import akka.http.scaladsl.model.{HttpResponse, HttpRequest}
 //import akka.stream.scaladsl.Flow
-//import com.leagueprojecto.api.domain.Summoner
-//import com.leagueprojecto.api.services.riot.RiotService.{ServiceNotAvailable, TooManyRequests}
-//import com.leagueprojecto.api.services.riot.SummonerService.{SummonerNotFound, GetSummonerByName}
+//import com.analyzedgg.api.domain.Summoner
+//import com.analyzedgg.api.services.riot.RiotService.{ServiceNotAvailable, TooManyRequests}
+//import com.analyzedgg.api.services.riot.SummonerService.{SummonerNotFound, GetSummonerByName}
 //import akka.http.scaladsl.model.StatusCodes._
 //
 //class SummonerServiceTest(_system: ActorSystem) extends BaseServiceTests(_system) {

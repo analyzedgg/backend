@@ -1,14 +1,14 @@
-package com.leagueprojecto.api.routes
+package com.analyzedgg.api.routes
 
 import akka.actor.ActorRef
 import akka.actor.Status.Failure
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.testkit.{TestProbe, TestActor}
-import com.leagueprojecto.api.domain.Summoner
-import com.leagueprojecto.api.services.SummonerManager
-import com.leagueprojecto.api.services.SummonerManager.GetSummoner
-import com.leagueprojecto.api.services.riot.RiotService.{ServiceNotAvailable, TooManyRequests}
+import com.analyzedgg.api.domain.Summoner
+import com.analyzedgg.api.services.SummonerManager
+import com.analyzedgg.api.services.SummonerManager.GetSummoner
+import com.analyzedgg.api.services.riot.RiotService.{ServiceNotAvailable, TooManyRequests}
 
 class CommonRoute extends RoutesTest {
 

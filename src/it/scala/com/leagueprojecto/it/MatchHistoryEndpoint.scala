@@ -1,10 +1,10 @@
-//package com.leagueprojecto.it
+//package com.analyzedgg.it
 //
 //import akka.http.scaladsl.model.ContentTypes._
 //import akka.http.scaladsl.model.StatusCodes._
 //import akka.http.scaladsl.testkit.RouteTestTimeout
 //import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-//import com.leagueprojecto.api.domain.{MatchDetail, PlayerStats}
+//import com.analyzedgg.api.domain.{MatchDetail, PlayerStats}
 //import scala.concurrent.duration._
 //
 //class MatchHistoryEndpoint extends EndpointTest {

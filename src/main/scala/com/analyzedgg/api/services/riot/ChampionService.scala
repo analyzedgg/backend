@@ -1,12 +1,12 @@
-package com.leagueprojecto.api.services.riot
+package com.analyzedgg.api.services.riot
 
 import akka.pattern.pipe
 import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import com.leagueprojecto.api.domain.ChampionList
-import com.leagueprojecto.api.services.riot.ChampionService._
+import com.analyzedgg.api.domain.ChampionList
+import com.analyzedgg.api.services.riot.ChampionService._
 import spray.json._
 
 object ChampionService {

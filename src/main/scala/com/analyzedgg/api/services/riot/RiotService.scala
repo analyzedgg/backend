@@ -1,4 +1,4 @@
-package com.leagueprojecto.api.services.riot
+package com.analyzedgg.api.services.riot
 
 import akka.actor.Status.Failure
 import akka.actor.{Actor, ActorLogging, ActorRef}
@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
-import com.leagueprojecto.api.domain.riot.{RiotSummoner, RiotSummonerDeserializer}
+import com.analyzedgg.api.domain.riot.{RiotSummoner, RiotSummonerDeserializer}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 

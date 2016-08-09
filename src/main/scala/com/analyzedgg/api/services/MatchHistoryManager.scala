@@ -1,13 +1,13 @@
-package com.leagueprojecto.api.services
+package com.analyzedgg.api.services
 
 import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import akka.pattern.CircuitBreaker
-import com.leagueprojecto.api.domain.MatchDetail
-import com.leagueprojecto.api.domain.riot.RiotRecentMatches
-import com.leagueprojecto.api.services.MatchHistoryManager.{State, StateData}
-import com.leagueprojecto.api.services.couchdb.DatabaseService
-import com.leagueprojecto.api.services.couchdb.DatabaseService.{MatchesResult, MatchesSaved, NoResult, SaveMatches}
-import com.leagueprojecto.api.services.riot.RecentMatchesService
+import com.analyzedgg.api.domain.MatchDetail
+import com.analyzedgg.api.domain.riot.RiotRecentMatches
+import com.analyzedgg.api.services.MatchHistoryManager.{State, StateData}
+import com.analyzedgg.api.services.couchdb.DatabaseService
+import com.analyzedgg.api.services.couchdb.DatabaseService.{MatchesResult, MatchesSaved, NoResult, SaveMatches}
+import com.analyzedgg.api.services.riot.RecentMatchesService
 
 import scala.concurrent.duration._
 

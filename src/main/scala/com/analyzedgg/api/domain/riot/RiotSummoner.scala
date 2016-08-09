@@ -1,8 +1,8 @@
-package com.leagueprojecto.api.domain.riot
+package com.analyzedgg.api.domain.riot
 
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.{DeserializationContext, JsonDeserializer, JsonNode}
-import com.leagueprojecto.api.domain.Summoner
+import com.analyzedgg.api.domain.Summoner
 
 case class RiotSummoner(summoner: Summoner)
 

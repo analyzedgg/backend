@@ -1,14 +1,14 @@
-package com.leagueprojecto.api.services
+package com.analyzedgg.api.services
 
 import akka.actor.Status.Failure
 import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import akka.pattern.CircuitBreaker
-import com.leagueprojecto.api.domain.Summoner
-import com.leagueprojecto.api.services.SummonerManager._
-import com.leagueprojecto.api.services.couchdb.DatabaseService
-import com.leagueprojecto.api.services.couchdb.DatabaseService.SummonerSaved
-import com.leagueprojecto.api.services.riot.SummonerService
-import com.leagueprojecto.api.services.riot.SummonerService.GetSummonerByName
+import com.analyzedgg.api.domain.Summoner
+import com.analyzedgg.api.services.SummonerManager._
+import com.analyzedgg.api.services.couchdb.DatabaseService
+import com.analyzedgg.api.services.couchdb.DatabaseService.SummonerSaved
+import com.analyzedgg.api.services.riot.SummonerService
+import com.analyzedgg.api.services.riot.SummonerService.GetSummonerByName
 
 object SummonerManager {
 

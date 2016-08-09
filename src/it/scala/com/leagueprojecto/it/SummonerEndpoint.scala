@@ -1,9 +1,9 @@
-//package com.leagueprojecto.it
+//package com.analyzedgg.it
 //
 //import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 //import akka.http.scaladsl.model.ContentTypes._
 //import akka.http.scaladsl.model.StatusCodes._
-//import com.leagueprojecto.api.domain.Summoner
+//import com.analyzedgg.api.domain.Summoner
 //
 //class SummonerEndpoint extends EndpointTest {
 //  val endpoint = "/api/euw/summoner"
