@@ -17,8 +17,9 @@ object RecentMatchesService {
   case object Empty extends Data
   case class RequestData(origin: ActorRef, summonerId: Long) extends Data
 
-  case class GetRecentMatchIds(region: String, summonerId: Long, queueType: String, championList: String, amount: Int)
+  case object FailedRetrievingRecentMatches extends Exception
 
+  case class GetRecentMatchIds(region: String, summonerId: Long, queueType: String, championList: String, amount: Int)
   case class Result(matchIds: Seq[Long])
 
   def props = Props(new RecentMatchesService)
@@ -43,8 +44,9 @@ class RecentMatchesService extends FSM[State, Data] with RiotService with ActorL
       mapRiotTo(entity, classOf[RiotRecentMatches]).pipeTo(self)
       goto(RiotRequestFinished) using data
 
-    case Event(x, _) =>
+    case Event(x, RequestData(origSender, summonerId)) =>
       log.error(s"GetRecentMatchIDS request failed for reason: $x")
+      origSender ! FailedRetrievingRecentMatches
       stop()
   }
 
