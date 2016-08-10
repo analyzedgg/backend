@@ -1,6 +1,7 @@
 package com.analyzedgg.api.services
 
 import akka.actor.{ActorLogging, ActorRef, FSM, Props}
+import akka.actor.Status.Failure
 import akka.pattern.CircuitBreaker
 import com.analyzedgg.api.domain.MatchDetail
 import com.analyzedgg.api.domain.riot.RiotRecentMatches
@@ -48,14 +49,14 @@ class MatchHistoryManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[Sta
     case Event(RecentMatchesService.Result(matchIds), StateData(Some(RequestData(sender, _)), _)) if matchIds.isEmpty =>
       // In case there are no match ids, return an empty MatchHistory Seq back to the sender.
       sender ! Result(Seq.empty[MatchDetail])
-      log.debug("Returning matches from couchDB")
       stop()
     case Event(RecentMatchesService.Result(matchIds), state) =>
       // create the empty matchesMap which are to be filled by either the Db or Riot
       val matchesMap = matchIds.map(m => m -> None).toMap
       goto(RetrievingFromDb) using state.copy(matches = matchesMap)
-
-    // todo: handle riot errors
+    case Event(e @ RecentMatchesService.FailedRetrievingRecentMatches, StateData(Some(RequestData(sender, _)), _)) =>
+      sender ! Failure(e)
+      stop()
   }
 
   when(RetrievingFromDb) {
@@ -63,8 +64,8 @@ class MatchHistoryManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[Sta
       val mergedMatches = matches ++ matchDetails.map(m => m.matchId -> Some(m))
 
       if (!hasEmptyValues(mergedMatches)) {
-        sender ! Result(getValues(mergedMatches).sortBy(_.matchId))
         log.debug("Returning matches from RIOT")
+        sender ! Result(getValues(mergedMatches).sortBy(_.matchId))
         stop()
       } else {
         goto(RetrievingFromRiot) using StateData(Some(RequestData(sender, msg)), mergedMatches)
@@ -85,8 +86,6 @@ class MatchHistoryManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[Sta
       sender ! Result(mergedMatchesSeq.sortBy(_.matchId))
       log.debug("Returning merged matches from RIOT")
       goto(PersistingToDb) using StateData(Some(RequestData(sender, msg)), mergedMatches)
-
-    // todo: handle riot errors
   }
 
   when(PersistingToDb, stateTimeout = 10.seconds) {
@@ -127,8 +126,9 @@ class MatchHistoryManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[Sta
   }
 
   whenUnhandled {
-    case Event(msg, _) =>
+    case Event(msg, StateData(Some(RequestData(sender, _)), _)) =>
       log.error(s"Got unhandled message ($msg) in $stateName")
+      sender ! Failure(new IllegalStateException())
       stop()
   }
 

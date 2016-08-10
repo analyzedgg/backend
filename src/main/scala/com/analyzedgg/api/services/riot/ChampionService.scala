@@ -1,5 +1,6 @@
 package com.analyzedgg.api.services.riot
 
+import akka.actor.Status.Failure
 import akka.pattern.pipe
 import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
@@ -29,6 +30,8 @@ object ChampionService {
 
   case class ChampionsResponse(championList: ChampionList)
 
+  case object FailedRetrievingChampions extends Exception
+
   def props = Props[ChampionService]
 }
 
@@ -50,6 +53,7 @@ class ChampionService extends FSM[State, Data] with ActorLogging with RiotServic
       goto(RiotRequestFinished) using data
     case Event(x, RequestData(origSender)) =>
       log.error(s"Something went wrong retrieving champions: $x")
+      origSender ! Failure(FailedRetrievingChampions)
       stop()
   }
 

@@ -19,6 +19,7 @@ object SummonerService {
 
   case class GetSummonerByName(region: String, name: String)
   case object SummonerNotFound extends Exception
+  case object FailedRetrievingSummoner extends Exception
   case class Result(summoner: Summoner)
 
   def props = Props(new SummonerService)
@@ -40,12 +41,13 @@ class SummonerService extends FSM[State, Data] with ActorLogging with RiotServic
     case Event(HttpResponse(StatusCodes.OK, _, entity, _), data: RequestData) =>
       mapRiotTo(entity, classOf[RiotSummoner]).pipeTo(self)
       goto(RiotRequestFinished) using data
-    case Event(x, RequestData(origSender, region, name)) =>
+    case Event(HttpResponse(StatusCodes.NotFound, _, _, _), RequestData(origSender, region, name)) =>
       log.warning(s"No summoner found by name $name in region '$region'")
       origSender ! SummonerNotFound
       stop()
-    case Event(x, _) =>
-      log.error(s"Something went wrong retrieving matches: $x")
+    case Event(x, RequestData(origSender, _, _)) =>
+      log.error(s"Something went wrong retrieving a summoner: $x")
+      origSender ! FailedRetrievingSummoner
       stop()
   }
 

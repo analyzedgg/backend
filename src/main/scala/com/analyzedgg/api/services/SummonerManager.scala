@@ -52,8 +52,8 @@ class SummonerManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[State, 
     case Event(notFound @ SummonerService.SummonerNotFound, (Some(RequestData(sender, _)), _)) =>
       sender ! Failure(notFound)
       stop()
-    case Event(failure: Failure, (Some(RequestData(sender, _)), _)) =>
-      sender ! failure
+    case Event(riotError @ SummonerService.FailedRetrievingSummoner, (Some(RequestData(sender, _)), _)) =>
+      sender ! Failure(riotError)
       stop()
   }
 
@@ -94,6 +94,7 @@ class SummonerManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[State, 
   whenUnhandled {
     case Event(msg, _) =>
       log.error(s"Got unhandled message ($msg) in $stateName")
+      sender ! Failure(new IllegalStateException())
       stop()
   }
 
