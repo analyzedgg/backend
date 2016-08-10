@@ -35,7 +35,7 @@ class MatchHistoryManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[Sta
 
   import MatchHistoryManager._
 
-  val dbService = context.actorOf(DatabaseService.props(couchDbCircuitBreaker), "dbService")
+  val dbService = createDatabaseServiceActor
 
   startWith(Idle, StateData(None, Map.empty))
 
@@ -102,7 +102,7 @@ class MatchHistoryManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[Sta
       nextStateData match {
         case StateData(Some(RequestData(_, GetMatches(region, summonerId, queueType, championList))), _) =>
           log.info("Requesting last 20 match ids from Riot")
-          val recentMatchesActor = context.actorOf(RecentMatchesService.props)
+          val recentMatchesActor = createRecentMatchServiceActor
           recentMatchesActor ! RecentMatchesService.GetRecentMatchIds(region, summonerId, queueType, championList, 20)
         case failData =>
           log.error(s"Something went wrong when going from Idle -> RetrievingRecentMatchIdsFromRiot, got data: $failData")
@@ -137,4 +137,11 @@ class MatchHistoryManager(couchDbCircuitBreaker: CircuitBreaker) extends FSM[Sta
 
   private def getValues(mergedMatches: Map[Long, Option[MatchDetail]]): Seq[MatchDetail] =
     mergedMatches.values.map(_.get).toSeq
+
+  protected def createDatabaseServiceActor: ActorRef = {
+    context.actorOf(DatabaseService.props(couchDbCircuitBreaker), "dbService")
+  }
+  protected def createRecentMatchServiceActor: ActorRef = {
+    context.actorOf(RecentMatchesService.props)
+  }
 }
