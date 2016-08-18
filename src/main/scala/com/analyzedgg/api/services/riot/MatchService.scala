@@ -1,12 +1,12 @@
-package com.leagueprojecto.api.services.riot
+package com.analyzedgg.api.services.riot
 
 import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes, Uri}
 import akka.pattern.pipe
-import com.leagueprojecto.api.domain._
-import com.leagueprojecto.api.domain.riot._
-import com.leagueprojecto.api.services.riot.MatchService._
+import com.analyzedgg.api.domain._
+import com.analyzedgg.api.domain.riot._
+import com.analyzedgg.api.services.riot.MatchService._
 
 object MatchService {
 

@@ -1,4 +1,4 @@
-package com.leagueprojecto.api.domain
+package com.analyzedgg.api.domain
 
 case class Summoner(
                      id: Long,

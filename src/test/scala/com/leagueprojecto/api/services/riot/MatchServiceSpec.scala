@@ -1,11 +1,11 @@
-package com.leagueprojecto.api.services.riot
+package com.analyzedgg.api.services.riot
 
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import com.leagueprojecto.api.services.riot.MatchService.{GetMatch, Result}
+import com.analyzedgg.api.services.riot.MatchService.{GetMatch, Result}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.testkit.TestProbe
-import com.leagueprojecto.api.testHelpers.BaseServiceHelper
+import com.analyzedgg.api.testHelpers.BaseServiceHelper
 
 import scala.concurrent.Future
 

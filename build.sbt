@@ -1,6 +1,6 @@
 name := "api"
 
-organization := "com.leagueprojecto"
+organization := "com.analyzedgg"
 
 version := "0.0.1"
 
@@ -52,6 +52,6 @@ deployTask <<= assembly map { (asm) =>
   s"ssh $account cd league && ./run.sh".!
 }
 
-mainClass in (Compile,run) := Some("com.leagueprojecto.api.Startup")
+mainClass in (Compile,run) := Some("com.analyzedgg.api.Startup")
 
 fork in run := true

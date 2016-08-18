@@ -1,8 +1,8 @@
-package com.leagueprojecto.api
+package com.analyzedgg.api
 
-import com.leagueprojecto.api.domain._
-import com.leagueprojecto.api.domain.riot._
-import com.leagueprojecto.api.services.riot.ChampionService.ChampionsResponse
+import com.analyzedgg.api.domain._
+import com.analyzedgg.api.domain.riot._
+import com.analyzedgg.api.services.riot.ChampionService.ChampionsResponse
 import spray.json._
 
 import scala.concurrent.Future

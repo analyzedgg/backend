@@ -1,4 +1,4 @@
-package com.leagueprojecto.api
+package com.analyzedgg.api
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.LoggingAdapter
@@ -9,12 +9,12 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.pattern.{CircuitBreaker, ask}
 import akka.util.Timeout
-import com.leagueprojecto.api.services.{MatchHistoryManager, SummonerManager}
-import com.leagueprojecto.api.services.SummonerManager.GetSummoner
-import com.leagueprojecto.api.services.riot.{ChampionService, RecentMatchesService, RiotService, SummonerService}
+import com.analyzedgg.api.services.{MatchHistoryManager, SummonerManager}
+import com.analyzedgg.api.services.SummonerManager.GetSummoner
+import com.analyzedgg.api.services.riot.{ChampionService, RecentMatchesService, RiotService, SummonerService}
 import com.typesafe.config.Config
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import com.leagueprojecto.api.services.riot.ChampionService.GetChampions
+import com.analyzedgg.api.services.riot.ChampionService.GetChampions
 
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration._

@@ -1,10 +1,10 @@
-package com.leagueprojecto.api.services
+package com.analyzedgg.api.services
 
 import akka.actor._
-import com.leagueprojecto.api.domain.MatchDetail
-import com.leagueprojecto.api.services.MatchCombiner._
-import com.leagueprojecto.api.services.riot.MatchService
-import com.leagueprojecto.api.services.riot.MatchService.GetMatch
+import com.analyzedgg.api.domain.MatchDetail
+import com.analyzedgg.api.services.MatchCombiner._
+import com.analyzedgg.api.services.riot.MatchService
+import com.analyzedgg.api.services.riot.MatchService.GetMatch
 
 import scala.concurrent.duration._
 

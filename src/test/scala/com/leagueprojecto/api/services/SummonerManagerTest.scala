@@ -1,12 +1,12 @@
-package com.leagueprojecto.api.services
+package com.analyzedgg.api.services
 
 import akka.actor.Status.Failure
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.pattern.CircuitBreaker
 import akka.testkit.{TestActor, TestProbe}
-import com.leagueprojecto.api.domain.Summoner
-import com.leagueprojecto.api.services.couchdb.DatabaseService
-import com.leagueprojecto.api.services.riot.SummonerService
+import com.analyzedgg.api.domain.Summoner
+import com.analyzedgg.api.services.couchdb.DatabaseService
+import com.analyzedgg.api.services.riot.SummonerService
 import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 
 import scala.concurrent.ExecutionContextExecutor

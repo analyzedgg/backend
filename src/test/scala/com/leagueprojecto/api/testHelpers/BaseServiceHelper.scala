@@ -1,4 +1,4 @@
-package com.leagueprojecto.api.testHelpers
+package com.analyzedgg.api.testHelpers
 
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit}

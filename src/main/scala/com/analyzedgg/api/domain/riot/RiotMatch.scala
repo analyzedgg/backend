@@ -1,4 +1,4 @@
-package com.leagueprojecto.api.domain.riot
+package com.analyzedgg.api.domain.riot
 
 case class RiotMatch(
                       matchId: Long,

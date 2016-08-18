@@ -1,4 +1,4 @@
-package com.leagueprojecto.api
+package com.analyzedgg.api
 
 import akka.actor._
 import akka.event.Logging

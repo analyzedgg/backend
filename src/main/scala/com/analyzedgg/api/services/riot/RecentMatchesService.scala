@@ -1,11 +1,11 @@
-package com.leagueprojecto.api.services.riot
+package com.analyzedgg.api.services.riot
 
 import akka.actor.{ActorLogging, ActorRef, FSM, Props}
 import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model.{HttpResponse, StatusCodes, Uri}
 import akka.pattern.pipe
-import com.leagueprojecto.api.domain.riot.RiotRecentMatches
-import com.leagueprojecto.api.services.riot.RecentMatchesService._
+import com.analyzedgg.api.domain.riot.RiotRecentMatches
+import com.analyzedgg.api.services.riot.RecentMatchesService._
 
 object RecentMatchesService {
   sealed trait State

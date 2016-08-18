@@ -1,4 +1,4 @@
-package com.leagueprojecto.api.services.riot
+package com.analyzedgg.api.services.riot
 
 import akka.actor.ActorSystem
 import akka.http.javadsl.Http

@@ -1,9 +1,9 @@
-package com.leagueprojecto.api.routes
+package com.analyzedgg.api.routes
 
 import akka.event.LoggingAdapter
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
-import com.leagueprojecto.api.Routes
+import com.analyzedgg.api.Routes
 import com.typesafe.config.Config
 import org.scalatest.{FlatSpec, GivenWhenThen, Matchers}
 
